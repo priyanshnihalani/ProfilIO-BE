@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  passwordHash      String
+  fullName          String
+  planType          PlanType  @default(FREE) // FREE, STARTER, PRO
+  paymentDate       DateTime?
+  membershipEndDate DateTime?
+  
+  // Usage tracking based on the new pricing model
+  resumeDownloads   Int       @default(0)
+  aiImprovements    Int       @default(0)
+  lastDownloadReset DateTime  @default(now())
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+enum PlanType {
+  FREE
+  STARTER
+  PRO
+}
