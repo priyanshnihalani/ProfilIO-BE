@@ -50,22 +50,22 @@ jobs:
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy to EC2
-  run: |
-    scp docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/profilio/backend/docker-compose.yml
+        run: |
+          scp docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/profilio/backend/docker-compose.yml
 
-    ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
-      cd /home/ubuntu/profilio/backend
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/ubuntu/profilio/backend
 
-      echo '${{ secrets.BACKEND_ENV }}' > .env
+            echo '${{ secrets.BACKEND_ENV }}' > .env
 
-      aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
-      | docker login \
-        --username AWS \
-        --password-stdin \
-        ${{ steps.login-ecr.outputs.registry }}
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+              | docker login \
+                --username AWS \
+                --password-stdin \
+                ${{ steps.login-ecr.outputs.registry }}
 
-      docker compose pull
-      docker compose up -d
+            docker compose pull
+            docker compose up -d
 
-      docker image prune -f
-    EOF
+            docker image prune -f
+          EOF
