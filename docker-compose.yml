@@ -1,32 +1,12 @@
 services:
-  postgres:
-    image: postgres:17
-    container_name: profilio-postgres
-
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: resume_generator
-
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-    restart: unless-stopped
-
   backend:
     image: 265751834194.dkr.ecr.ap-south-1.amazonaws.com/profiilo-be:latest
     container_name: profilio-backend
-
-    depends_on:
-      - postgres
 
     ports:
       - "5000:5000"
 
     env_file:
-      - ./.env
+      - .env
 
     restart: unless-stopped
-
-volumes:
-  postgres_data:
