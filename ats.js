@@ -359,7 +359,7 @@ const callGroq = async (systemPrompt, userPrompt) => {
         { role: "user", content: userPrompt },
       ],
       model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
-      temperature: 0.1,
+      temperature: 0.1, 
       response_format: { type: "json_object" },
     }, { signal: controller.signal });
     const raw = response.choices[0]?.message?.content?.trim() || "{}";
