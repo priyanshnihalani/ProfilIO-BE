@@ -5,12 +5,12 @@ import { config } from '../config.js';
 const JWT_SECRET = config.jwtSecret;
 const PLAN_LIMITS = {
     FREE: {
-        resumeDownloads: 1,
-        aiImprovements: 3,
+        resumeDownloads: Infinity,
+        aiImprovements: Infinity,
     },
     STARTER: {
-        resumeDownloads: 10,
-        aiImprovements: 50,
+        resumeDownloads: Infinity,
+        aiImprovements: Infinity,
     },
     PRO: {
         resumeDownloads: Infinity,
