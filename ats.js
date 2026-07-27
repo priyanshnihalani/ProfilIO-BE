@@ -435,6 +435,7 @@ const calcAntiPatternScore = (data) => {
 // ─── 5. MAIN SCORER ────────────────────────────────────────────────────────────
 
 /**
+ * 
  * scoreResume — full MAANG-level ATS scoring
  *
  * @param {object} params
