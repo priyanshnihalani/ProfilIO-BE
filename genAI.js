@@ -268,27 +268,100 @@ CRITICAL FORMATTING RULES — YOU MUST FOLLOW THESE:
     return stripMarkdown(raw);
 };
 
-const extractJSON = (text) => {
-    if (!text) return {};
-    // Remove any reasoning thoughts (<think>...</think>) output by reasoning models
-    const cleaned = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+const repairTruncatedJSON = (str) => {
+    let cleanStr = str.trim();
+    if (!cleanStr) return {};
+
     try {
-        return JSON.parse(cleaned);
+        return JSON.parse(cleanStr);
     } catch (e) {
-        // Fallback: Find the first '{' and last '}'
-        const firstBracket = cleaned.indexOf('{');
-        const lastBracket = cleaned.lastIndexOf('}');
-        if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-            const jsonCandidate = cleaned.substring(firstBracket, lastBracket + 1);
-            try {
-                return JSON.parse(jsonCandidate);
-            } catch (innerErr) {
-                console.error("[genAI] Substring JSON parsing failed:", innerErr);
+        // Direct parse failed, try to repair it
+    }
+
+    let inString = false;
+    let escaped = false;
+    let stack = [];
+
+    for (let i = 0; i < cleanStr.length; i++) {
+        const char = cleanStr[i];
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
+        if (char === '\\') {
+            escaped = true;
+            continue;
+        }
+        if (char === '"') {
+            inString = !inString;
+            continue;
+        }
+        if (!inString) {
+            if (char === '{' || char === '[') {
+                stack.push(char);
+            } else if (char === '}' || char === ']') {
+                stack.pop();
             }
         }
-        console.error("[genAI] Direct JSON parsing failed:", e);
+    }
+
+    let repaired = cleanStr;
+    if (inString) {
+        repaired += '"';
+    }
+
+    // Close any open braces/brackets in reverse order
+    while (stack.length > 0) {
+        const last = stack.pop();
+        if (last === '{') {
+            repaired += '}';
+        } else if (last === '[') {
+            repaired += ']';
+        }
+    }
+
+    try {
+        return JSON.parse(repaired);
+    } catch (err) {
+        console.error("[genAI] JSON Repair failed:", err.message);
         return {};
     }
+};
+
+const extractJSON = (text) => {
+    if (!text) return {};
+    
+    let cleaned = text;
+    // Find the last index of any closing think tag case-insensitively
+    const thinkCloseRegex = /<\/think(?:ing)?>/gi;
+    let match;
+    let lastCloseIndex = -1;
+    while ((match = thinkCloseRegex.exec(text)) !== null) {
+        lastCloseIndex = match.index + match[0].length;
+    }
+    
+    if (lastCloseIndex !== -1) {
+        cleaned = text.substring(lastCloseIndex);
+    } else {
+        // If there's an opening tag but no closing tag, find the first occurrence of '{'
+        // after the opening tag and assume the JSON starts there.
+        const openTagIndex = text.search(/<think(?:ing)?>/i);
+        if (openTagIndex !== -1) {
+            const firstBrace = text.indexOf('{', openTagIndex);
+            if (firstBrace !== -1) {
+                cleaned = text.substring(firstBrace);
+            }
+        } else {
+            // No think tags but maybe the model output some preamble. Find the first '{'
+            const firstBrace = text.indexOf('{');
+            if (firstBrace !== -1) {
+                cleaned = text.substring(firstBrace);
+            }
+        }
+    }
+    
+    cleaned = cleaned.trim();
+    return repairTruncatedJSON(cleaned);
 };
 
 export const parseResumeToJSON = async (rawText) => {
@@ -347,7 +420,7 @@ Formatting Rules for nested or list content (IMPORTANT):
         messages: [
             {
                 role: "system",
-                content: systemPrompt.trim() + "\n\nCRITICAL: You MUST respond with a single, valid JSON object ONLY. Do not wrap it in markdown code blocks (e.g., do not use ```json) and do not add any surrounding conversational text.",
+                content: systemPrompt.trim() + "\n\nCRITICAL: You MUST respond with a single, valid JSON object ONLY. Do NOT write any internal reasoning, chain of thought, or thinking processes. Do NOT use <think> tags or output any text before/after the JSON. Jump straight into the JSON object. Do not wrap it in markdown code blocks (e.g., do not use ```json).",
             },
             {
                 role: "user",
@@ -356,8 +429,13 @@ Formatting Rules for nested or list content (IMPORTANT):
         ],
         model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
         temperature: 0.1,
+        max_tokens: 4000,
     });
 
     const raw = response.choices[0]?.message?.content?.trim() || "{}";
-    return extractJSON(raw);
+    const parsed = extractJSON(raw);
+    if (!parsed || Object.keys(parsed).length === 0) {
+        console.debug("[genAI] Raw LLM Response that failed parsing:\n", raw);
+    }
+    return parsed;
 };
