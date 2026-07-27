@@ -34,8 +34,9 @@ INSTRUCTIONS:
 1. Do NOT recalculate the score. Accept it as final.
 2. Provide a 1-2 sentence encouraging overview explaining why the score is what it is.
 3. Provide a list of 3-5 specific, actionable bullet points to improve the resume, based ONLY on the missing keywords, structure issues, weak bullets, or formatting warnings provided above.
-4. NEVER fabricate experience or suggest adding technologies the user doesn't know. 
-5. Return ONLY a valid JSON string (no markdown formatting, no backticks) with this structure:
+4. NEVER fabricate experience or suggest adding technologies/skills the user doesn't know. DO NOT suggest adding extra skills or projects. 
+5. Use strictly professional language. DO NOT mention resume layout types (e.g., multicolumn or single column).
+6. Return ONLY a valid JSON string (no markdown formatting, no backticks) with this structure:
 {
   "overview": "string",
   "actionItems": ["string", "string"]

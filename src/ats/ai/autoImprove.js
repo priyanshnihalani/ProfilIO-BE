@@ -26,11 +26,13 @@ INSTRUCTIONS:
 1. Organically rewrite the Summary to include some of the missing keywords, keeping it professional and under 80 words.
 2. Preserve and organize existing skills. Do NOT add, remove, or replace skills.
 3. Rewrite the Experience bullets:
-   - Incorporate only truthful missing keywords naturally into the bullets.
-   - Preserve the same jobs and the same number of bullets.
+   - Incorporate only truthful missing keywords naturally. DO NOT keyword stuff. Ensure the phrasing reads organically.
+   - Preserve the exact same jobs and the exact same number of bullets.
    - Replace weak passive verbs (e.g., 'helped', 'worked on') with strong action verbs ('engineered', 'spearheaded', 'led', 'managed').
-   - DO NOT fabricate entirely new skills, jobs, dates, companies, tools, metrics, certifications, or responsibilities. Only improve the text.
-   - Preserve the exact dates and date ranges from the user input. Do NOT alter, format, normalize, or change any dates or date ranges. Keep them exactly as they are in the original content (e.g., keep "2021 - Present" or "2020" as is, without adding or modifying months).
+   - CRITICAL: Use existing numbers/metrics when already present. Do NOT invent new metrics, and DO NOT remove any existing metrics.
+   - DO NOT fabricate entirely new skills, projects, jobs, dates, companies, tools, metrics, certifications, or responsibilities. Only improve the text. DO NOT suggest adding new skills or projects.
+   - Use strictly professional language. DO NOT add comments about the resume layout type (e.g., multicolumn or single column).
+   - Preserve the exact dates and date ranges from the user input. Do NOT alter, format, normalize, or change any dates or date ranges.
 4. Return ONLY a valid JSON string (no markdown formatting, no backticks) with this structure:
 {
   "summary": "improved summary string",

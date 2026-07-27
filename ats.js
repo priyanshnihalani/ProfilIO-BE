@@ -581,15 +581,6 @@ function generateRecommendations({ dimensionScores, keywordData, formatData, imp
             impact: "Tables are the #1 resume format killer — your data becomes unreadable",
           });
         }
-        if (formatData.has_multi_columns) {
-          recs.push({
-            priority: "critical",
-            dimension: "Format",
-            issue: "Multi-column layout detected",
-            fix: "Switch to single-column format. ATS reads left-to-right horizontally, mangling columns.",
-            impact: "Two-column resumes are misread by ~80% of ATS systems",
-          });
-        }
         if ((formatData.format_issues || []).length > 0) {
           recs.push({
             priority: "high",

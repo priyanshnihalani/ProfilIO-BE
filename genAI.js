@@ -10,10 +10,10 @@ Requirements:
 - ATS optimized
 - Professional tone
 - Concise and impactful
-- Use measurable language
-- Keep under 80 words
+- Use measurable language, but DO NOT remove any existing metrics.
 - DO NOT use any generic buzzwords (results-driven, passionate, team player, synergy, leverage, innovative, proactive, detail-oriented, self-starter).
-- Do not invent fake experience
+- Do not invent fake experience.
+- Incorporate keywords naturally. DO NOT keyword stuff. Ensure the phrasing reads organically.
 - Optimize toward a 90+ ATS score by clarifying role fit, impact, and supported keywords only.
 - Return ONLY improved text
 `,
@@ -27,8 +27,8 @@ Requirements:
 - Strong action verbs
 - Preserve the exact same jobs in the same order. Do NOT add, remove, merge, or split jobs.
 - Preserve the exact same number of bullet points under each job.
-- Improve wording, clarity, action verbs, ATS readability, and supported keyword placement.
-- Use existing numbers/metrics when already present. Do NOT invent new metrics.
+- Improve wording, clarity, action verbs, ATS readability, and supported keyword placement. DO NOT keyword stuff.
+- CRITICAL: Use existing numbers/metrics when already present. Do NOT invent new metrics, and DO NOT remove any existing metrics.
 - If a bullet has no metric, make it specific and outcome-oriented without fabricating numbers.
 - Every bullet point should start with a strong, active action verb when possible.
 - Every bullet point must start with a capital letter and end with a period.
@@ -66,8 +66,8 @@ Requirements:
 - Highlight technical impact
 - Preserve the exact same projects in the same order. Do NOT add, remove, merge, or split projects.
 - Preserve the exact same number of bullet points under each project.
-- Improve wording, clarity, action verbs, ATS readability, and supported keyword placement.
-- Use existing numbers/metrics when already present. Do NOT invent new metrics.
+- Improve wording, clarity, action verbs, ATS readability, and supported keyword placement. DO NOT keyword stuff.
+- CRITICAL: Use existing numbers/metrics when already present. Do NOT invent new metrics, and DO NOT remove any existing metrics.
 - If a bullet has no metric, make it specific and outcome-oriented without fabricating numbers.
 - Every bullet point should start with a strong, active action verb when possible.
 - Every bullet point must start with a capital letter and end with a period.
@@ -238,7 +238,10 @@ CRITICAL FORMATTING RULES — YOU MUST FOLLOW THESE:
 - Use plain text only — the output will be displayed in a professional resume template, not a markdown renderer
 - Bullet points must use a hyphen-space (- ) prefix, nothing else
 - Preserve the user's existing skills, jobs, projects, and bullet counts.
-- Never claim tools, platforms, domains, certifications, companies, metrics, or responsibilities that are not supported by the current content`;
+- Never claim tools, platforms, domains, certifications, companies, metrics, or responsibilities that are not supported by the current content.
+- DO NOT add or suggest any extra skills or projects.
+- Use strictly professional language. DO NOT add comments or warnings about the resume layout type (e.g., multicolumn or single column).
+- OUTPUT ONLY THE ACTUAL RESUME CONTENT. NO PREAMBLE. NO EXPLANATION. NO "Here is the improved..." TEXT. JUST THE RAW OUTPUT.`;
 
     const response = await createChatCompletion({
         messages: [
