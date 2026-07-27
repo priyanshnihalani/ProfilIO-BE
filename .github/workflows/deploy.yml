@@ -65,7 +65,10 @@ jobs:
                 ${{ steps.login-ecr.outputs.registry }}
 
             docker compose pull
-            docker compose up -d
+
+            docker compose down
+
+            docker compose up -d --force-recreate
 
             docker image prune -f
           EOF
