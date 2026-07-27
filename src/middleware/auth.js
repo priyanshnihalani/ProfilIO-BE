@@ -62,6 +62,12 @@ export const consumeUsage = (usageField) => (req, res, next) => {
             const limit = PLAN_LIMITS[user.planType]?.[usageField] ?? 0;
             let currentUsage = user[usageField] ?? 0;
 
+            // Short-circuit: no DB write needed when limit is unlimited
+            if (limit === Infinity) {
+                req.user = { ...req.user, planType: user.planType };
+                return next();
+            }
+
             if (usageField === 'resumeDownloads') {
                 const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
                 const now = new Date();
