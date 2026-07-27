@@ -268,6 +268,28 @@ CRITICAL FORMATTING RULES — YOU MUST FOLLOW THESE:
     return stripMarkdown(raw);
 };
 
+const extractJSON = (text) => {
+    if (!text) return {};
+    const trimmed = text.trim();
+    try {
+        return JSON.parse(trimmed);
+    } catch (e) {
+        // Fallback: Find the first '{' and last '}'
+        const firstBracket = trimmed.indexOf('{');
+        const lastBracket = trimmed.lastIndexOf('}');
+        if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+            const jsonCandidate = trimmed.substring(firstBracket, lastBracket + 1);
+            try {
+                return JSON.parse(jsonCandidate);
+            } catch (innerErr) {
+                console.error("[genAI] Substring JSON parsing failed:", innerErr);
+            }
+        }
+        console.error("[genAI] Direct JSON parsing failed:", e);
+        return {};
+    }
+};
+
 export const parseResumeToJSON = async (rawText) => {
     const systemPrompt = `
 You are an expert ATS resume parser.
@@ -311,9 +333,9 @@ Required JSON structure:
 }
 
 Formatting Rules for nested or list content (IMPORTANT):
-- experience: Format each job exactly as "Title | Company | Location | Dates\n- Bullet 1\n- Bullet 2" (separated by blank lines). Ensure "Dates" are copy-pasted verbatim from the input.
+- experience: Format each job exactly as "Title | Company | Location | Dates\\n- Bullet 1\\n- Bullet 2" (separated by blank lines). Ensure "Dates" are copy-pasted verbatim from the input.
 - education: Format each degree as "Degree | School | Dates | Details". Ensure "Dates" are copy-pasted verbatim from the input.
-- projects: Format each project as "Project Name | Project Details\n- Bullet 1\n- Bullet 2\n\n(blank line between projects — REQUIRED)".
+- projects: Format each project as "Project Name | Project Details\\n- Bullet 1\\n- Bullet 2\\n\\n(blank line between projects — REQUIRED)".
 - skills: Comma-separated list.
 - certifications: One per line "Name | Organization | Year". Ensure "Year" is copy-pasted verbatim from the input.
 - languages: Comma-separated list.
@@ -324,7 +346,7 @@ Formatting Rules for nested or list content (IMPORTANT):
         messages: [
             {
                 role: "system",
-                content: systemPrompt.trim(),
+                content: systemPrompt.trim() + "\n\nCRITICAL: You MUST respond with a single, valid JSON object ONLY. Do not wrap it in markdown code blocks (e.g., do not use ```json) and do not add any surrounding conversational text.",
             },
             {
                 role: "user",
@@ -333,14 +355,8 @@ Formatting Rules for nested or list content (IMPORTANT):
         ],
         model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
         temperature: 0.1,
-        response_format: { type: "json_object" },
     });
 
     const raw = response.choices[0]?.message?.content?.trim() || "{}";
-    try {
-        return JSON.parse(raw);
-    } catch (err) {
-        console.error("Failed to parse LLM JSON response", err);
-        return {};
-    }
+    return extractJSON(raw);
 };
