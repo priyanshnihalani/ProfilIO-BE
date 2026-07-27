@@ -1,7 +1,4 @@
-import Groq from "groq-sdk";
-
-const apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY;
-const groq = new Groq({ apiKey });
+import { createChatCompletion } from "../../../utils/groqClient.js";
 
 /**
  * Uses Groq (Llama 3) to generate actionable feedback based purely on deterministic ATS scores.
@@ -45,7 +42,7 @@ INSTRUCTIONS:
 }`;
 
     try {
-        const chatCompletion = await groq.chat.completions.create({
+        const chatCompletion = await createChatCompletion({
             messages: [{ role: "user", content: prompt }],
             model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
             temperature: 0.2,

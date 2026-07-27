@@ -53,7 +53,7 @@ export const consumeUsage = (usageField) => (req, res, next) => {
             if (req.user.role === 'ADMIN' || req.user.id === 'master-admin') {
                 return next();
             }
-            
+
 
             const user = await prisma.user.findUnique({ where: { id: req.user.id } });
             if (!user) {

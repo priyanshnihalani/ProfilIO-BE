@@ -1,11 +1,4 @@
-import Groq from "groq-sdk";
-import { calculateAtsScore } from "./src/ats/AtsEngine.js";  // Import the enhanced FAANG-compliant engine
-
-// Initialize Groq. Fall back to GEMINI_API_KEY if GROQ_API_KEY is not defined.
-const apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY;
-const groq = new Groq({
-    apiKey: apiKey,
-});
+import { createChatCompletion } from "./utils/groqClient.js";
 
 const SECTION_PROMPTS = {
     summary: `
@@ -247,7 +240,7 @@ CRITICAL FORMATTING RULES — YOU MUST FOLLOW THESE:
 - Preserve the user's existing skills, jobs, projects, and bullet counts.
 - Never claim tools, platforms, domains, certifications, companies, metrics, or responsibilities that are not supported by the current content`;
 
-    const response = await groq.chat.completions.create({
+    const response = await createChatCompletion({
         messages: [
             {
                 role: "system",
@@ -416,7 +409,7 @@ Formatting Rules for nested or list content (IMPORTANT):
 - awards: "Award Name | Organization | Year". Ensure "Year" is copy-pasted verbatim from the input.
 `;
 
-    const response = await groq.chat.completions.create({
+    const response = await createChatCompletion({
         messages: [
             {
                 role: "system",

@@ -8,13 +8,9 @@
  * This module mirrors that multi-dimensional scoring approach.
  */
 
-import Groq from "groq-sdk";
+import { createChatCompletion } from "./utils/groqClient.js";
 import { config } from "./src/config.js";
 import { clampScore, normalizeModelObject } from "./src/ats/validation.js";
-
-const groq = new Groq({
-  apiKey: config.groqApiKey,
-});
 
 // ─── 1. WEIGHTS (must sum to 100) ──────────────────────────────────────────────
 export const ATS_WEIGHTS = {
@@ -353,7 +349,7 @@ const callGroq = async (systemPrompt, userPrompt) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), config.atsTimeoutMs);
   try {
-    const response = await groq.chat.completions.create({
+    const response = await createChatCompletion({
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
