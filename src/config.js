@@ -22,4 +22,4 @@ export const config = Object.freeze({
     atsTimeoutMs: Math.max(2_000, Number(process.env.ATS_TIMEOUT_MS) || 20_000),
     atsMaxResumeChars: Math.max(1_000, Number(process.env.ATS_MAX_RESUME_CHARS) || 30_000),
     atsMaxJobChars: Math.max(500, Number(process.env.ATS_MAX_JOB_CHARS) || 15_000),
-});
+}); 
