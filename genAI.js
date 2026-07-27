@@ -270,15 +270,16 @@ CRITICAL FORMATTING RULES — YOU MUST FOLLOW THESE:
 
 const extractJSON = (text) => {
     if (!text) return {};
-    const trimmed = text.trim();
+    // Remove any reasoning thoughts (<think>...</think>) output by reasoning models
+    const cleaned = text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
     try {
-        return JSON.parse(trimmed);
+        return JSON.parse(cleaned);
     } catch (e) {
         // Fallback: Find the first '{' and last '}'
-        const firstBracket = trimmed.indexOf('{');
-        const lastBracket = trimmed.lastIndexOf('}');
+        const firstBracket = cleaned.indexOf('{');
+        const lastBracket = cleaned.lastIndexOf('}');
         if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-            const jsonCandidate = trimmed.substring(firstBracket, lastBracket + 1);
+            const jsonCandidate = cleaned.substring(firstBracket, lastBracket + 1);
             try {
                 return JSON.parse(jsonCandidate);
             } catch (innerErr) {
