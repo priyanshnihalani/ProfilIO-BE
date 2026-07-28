@@ -5,7 +5,7 @@ function isLikelyImageBasedPdf(text, numPages) {
     const trimmed = text.trim();
 
     if (!trimmed) {
-        return true;
+        return true
     }
 
     const pages = Math.max(numPages, 1);
