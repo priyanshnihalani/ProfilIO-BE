@@ -28,9 +28,9 @@ Requirements:
 - Preserve the exact same jobs in the same order. Do NOT add, remove, merge, or split jobs.
 - Preserve the exact same number of bullet points under each job.
 - Improve wording, clarity, action verbs, ATS readability, and supported keyword placement. DO NOT keyword stuff.
-- CRITICAL: Use existing numbers/metrics when already present. Do NOT invent new metrics, and DO NOT remove any existing metrics.
+- CRITICAL: Use existing numbers/metrics when already present. Always use digits for numbers (e.g., '5' instead of 'five'). Do NOT invent new metrics, and DO NOT remove any existing metrics.
 - If a bullet has no metric, make it specific and outcome-oriented without fabricating numbers.
-- Every bullet point should start with a strong, active action verb when possible.
+- Every bullet point must start immediately with a strong, active action verb. Do NOT start with adverbs like 'Successfully'.
 - Every bullet point must start with a capital letter and end with a period.
 - Bullet points must be concise and descriptive, between 12 and 25 words in length.
 - DO NOT use any generic buzzwords (results-driven, passionate, team player, synergy, leverage, innovative, proactive, detail-oriented, self-starter).
@@ -67,9 +67,9 @@ Requirements:
 - Preserve the exact same projects in the same order. Do NOT add, remove, merge, or split projects.
 - Preserve the exact same number of bullet points under each project.
 - Improve wording, clarity, action verbs, ATS readability, and supported keyword placement. DO NOT keyword stuff.
-- CRITICAL: Use existing numbers/metrics when already present. Do NOT invent new metrics, and DO NOT remove any existing metrics.
+- CRITICAL: Use existing numbers/metrics when already present. Always use digits for numbers (e.g., '5' instead of 'five'). Do NOT invent new metrics, and DO NOT remove any existing metrics.
 - If a bullet has no metric, make it specific and outcome-oriented without fabricating numbers.
-- Every bullet point should start with a strong, active action verb when possible.
+- Every bullet point must start immediately with a strong, active action verb. Do NOT start with adverbs like 'Successfully'.
 - Every bullet point must start with a capital letter and end with a period.
 - Bullet points must be concise and descriptive, between 12 and 25 words in length.
 - DO NOT use any generic buzzwords (results-driven, passionate, team player, synergy, leverage, innovative, proactive, detail-oriented, self-starter).
@@ -354,6 +354,13 @@ const extractJSON = (text) => {
                 cleaned = text.substring(firstBrace);
             }
         }
+    }
+    
+    // Also remove any trailing markdown or postamble by finding the last closing brace
+    const firstIdx = cleaned.indexOf('{');
+    const lastIdx = cleaned.lastIndexOf('}');
+    if (firstIdx !== -1 && lastIdx !== -1 && lastIdx >= firstIdx) {
+        cleaned = cleaned.substring(0, lastIdx + 1);
     }
     
     cleaned = cleaned.trim();

@@ -28,8 +28,8 @@ INSTRUCTIONS:
 3. Rewrite the Experience bullets:
    - Incorporate only truthful missing keywords naturally. DO NOT keyword stuff. Ensure the phrasing reads organically.
    - Preserve the exact same jobs and the exact same number of bullets.
-   - Replace weak passive verbs (e.g., 'helped', 'worked on') with strong action verbs ('engineered', 'spearheaded', 'led', 'managed').
-   - CRITICAL: Use existing numbers/metrics when already present. Do NOT invent new metrics, and DO NOT remove any existing metrics.
+   - Replace weak passive verbs (e.g., 'helped', 'worked on') with strong action verbs ('engineered', 'spearheaded', 'led', 'managed'). Every bullet MUST start immediately with a strong action verb (no adverbs like 'Successfully').
+   - CRITICAL: Use existing numbers/metrics when already present. Always use digits for numbers (e.g., '5' instead of 'five'). Do NOT invent new metrics, and DO NOT remove any existing metrics.
    - DO NOT fabricate entirely new skills, projects, jobs, dates, companies, tools, metrics, certifications, or responsibilities. Only improve the text. DO NOT suggest adding new skills or projects.
    - Use strictly professional language. DO NOT add comments about the resume layout type (e.g., multicolumn or single column).
    - Preserve the exact dates and date ranges from the user input. Do NOT alter, format, normalize, or change any dates or date ranges.

@@ -2,17 +2,22 @@
  * roleAlignmentAnalyzer.js — Deterministic role alignment analyzer
  */
 
-const SENIOR_SIGNALS = ["senior","sr.","sr ","lead","principal","staff","head of","director","chief","vp","vice president","architect","manager","10+ years","8+ years","9+ years","7+ years"];
-const MID_SIGNALS = ["mid","ii","iii","3+ years","4+ years","5+ years","6+ years"];
-const JUNIOR_SIGNALS = ["junior","jr.","jr ","associate","entry","entry-level","0-2 years","1+ year","1 year","2 years","recent graduate","fresh","fresher","intern"];
-const YEAR_REGEX = /(\d{4})/g;
+const SENIOR_SIGNALS = ["senior","sr.","\\bsr\\b","\\blead\\b","principal","\\bstaff\\b","head of","director","chief","vp","vice president","\\barchitect\\b","\\bmanager\\b","10\\+\\s*years","8\\+\\s*years","9\\+\\s*years","7\\+\\s*years"];
+const MID_SIGNALS = ["\\bmid\\b","\\bii\\b","\\biii\\b","3\\+\\s*years","4\\+\\s*years","5\\+\\s*years","6\\+\\s*years"];
+const JUNIOR_SIGNALS = ["junior","jr.","\\bjr\\b","associate","entry-level","0-2 years","1\\+\\s*year","1 year","2 years","recent graduate","fresher","intern"];
+const YEAR_REGEX = /\b(19\d{2}|20\d{2})\b/g;
 const DURATION_REGEX = /(\d+)\+?\s*years?\s+(?:of\s+)?experience/gi;
+
+const containsSignal = (lowerText, signal) => {
+  if (signal.includes("\\b")) return new RegExp(signal, "i").test(lowerText);
+  return lowerText.includes(signal);
+};
 
 const inferSeniority = (text = "") => {
   const lower = text.toLowerCase();
-  for (const signal of SENIOR_SIGNALS) { if (lower.includes(signal)) return "senior"; }
-  for (const signal of MID_SIGNALS) { if (lower.includes(signal)) return "mid"; }
-  for (const signal of JUNIOR_SIGNALS) { if (lower.includes(signal)) return "junior"; }
+  for (const signal of SENIOR_SIGNALS) { if (containsSignal(lower, signal)) return "senior"; }
+  for (const signal of MID_SIGNALS) { if (containsSignal(lower, signal)) return "mid"; }
+  for (const signal of JUNIOR_SIGNALS) { if (containsSignal(lower, signal)) return "junior"; }
 
   const years = [];
   let match;
@@ -23,9 +28,10 @@ const inferSeniority = (text = "") => {
   }
   if (years.length >= 2) {
     const span = Math.max(...years) - Math.min(...years);
-    if (span >= 8) return "senior";
-    if (span >= 4) return "mid";
-    if (span >= 1) return "junior";
+    // Be conservative when inferring seniority from raw dates alone
+    if (span >= 12) return "senior";
+    if (span >= 6) return "mid";
+    if (span >= 2) return "junior";
   }
   const durationRe = new RegExp(DURATION_REGEX.source, DURATION_REGEX.flags);
   const durationMatch = durationRe.exec(lower);
@@ -40,9 +46,9 @@ const inferSeniority = (text = "") => {
 
 const inferTargetSeniority = (targetRole = "") => {
   const lower = targetRole.toLowerCase();
-  for (const signal of SENIOR_SIGNALS) { if (lower.includes(signal)) return "senior"; }
-  for (const signal of MID_SIGNALS) { if (lower.includes(signal)) return "mid"; }
-  for (const signal of JUNIOR_SIGNALS) { if (lower.includes(signal)) return "junior"; }
+  for (const signal of SENIOR_SIGNALS) { if (containsSignal(lower, signal)) return "senior"; }
+  for (const signal of MID_SIGNALS) { if (containsSignal(lower, signal)) return "mid"; }
+  for (const signal of JUNIOR_SIGNALS) { if (containsSignal(lower, signal)) return "junior"; }
   return "mid";
 };
 

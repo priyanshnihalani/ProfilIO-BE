@@ -103,14 +103,6 @@ const buildRecommendations = (dimensionScores, analyzerResults, targetRole, temp
               fix: "Switch to a single-column layout for maximum ATS compatibility.",
               impact: "Two-column resumes are misread by ~80% of ATS systems.",
             });
-          } else {
-            recs.push({
-              priority: "medium",
-              dimension: "Format",
-              issue: "Two-column layout selected — ATS compatibility depends on export method.",
-              fix: "Use the PDF download (server-side rendering) rather than browser print for best ATS parsing.",
-              impact: "Server-rendered PDFs preserve text order; browser print may scramble columns.",
-            });
           }
         } else if (analyzerRec) {
           recs.push({
