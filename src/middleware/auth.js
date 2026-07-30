@@ -84,7 +84,7 @@ export const consumeUsage = (usageField) => (req, res, next) => {
                     });
                     currentUsage = 0;
                 }
-            }
+            } 
 
             if (currentUsage >= limit) {
                 if (usageField === 'resumeDownloads') {
