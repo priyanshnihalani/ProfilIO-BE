@@ -4,7 +4,7 @@
 FROM node:22-slim AS builder
  
 WORKDIR /app
- 
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 # Install only build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
@@ -44,7 +44,7 @@ WORKDIR /app
  
 ENV NODE_ENV=production
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
- 
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 # Install only runtime packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
