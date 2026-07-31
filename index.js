@@ -14,6 +14,7 @@ import { generatePdfFromHtml } from "./utils/generatePdfWithPuppeteer.js";
 import atsRoutes from "./src/ats/routes/atsRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
+import feedbackRoutes from "./src/routes/feedbackRoutes.js";
 import { consumeUsage } from "./src/middleware/auth.js";
 import { requireAuth } from "./src/middleware/auth.js";
 import { atsRateLimit } from "./src/middleware/rateLimit.js";
@@ -46,6 +47,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/ats", atsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 const upload = multer({
     storage: multer.memoryStorage(),
