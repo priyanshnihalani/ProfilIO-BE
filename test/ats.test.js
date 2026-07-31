@@ -230,9 +230,9 @@ test("Result contains all required AtsAnalysisResult fields", () => {
   assert.ok(result.details && typeof result.details === "object");
 });
 
-test("dimensionScores contains all 8 expected keys", () => {
+test("dimensionScores contains all 9 expected keys", () => {
   const result = calculateAtsScore(DEVOPS_RESUME, "", "DevOps Engineer");
-  for (const key of ["keywordRelevance","formatParsability","impactLanguage","sectionCompleteness","roleAlignment","contactInfo","readability","atsAntiPatterns"]) {
+  for (const key of ["keywordRelevance","formatParsability","impactLanguage","sectionCompleteness","roleAlignment","contactInfo","readability","atsAntiPatterns","enterpriseImpact"]) {
     assert.ok(key in result.dimensionScores, `Missing: ${key}`);
   }
 });
@@ -250,8 +250,8 @@ test("Overall score is never 100", () => {
   assert.ok(result.overallScore <= 97, `Score ${result.overallScore} exceeds cap of 97`);
 });
 
-test("Weights sum to exactly 108", () => {
-  assert.equal(Object.values(WEIGHTS).reduce((a, b) => a + b, 0), 108);
+test("Weights sum to exactly 100", () => {
+  assert.equal(Object.values(WEIGHTS).reduce((a, b) => a + b, 0), 100);
 });
 
 // ...

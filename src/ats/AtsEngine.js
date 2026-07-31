@@ -6,13 +6,14 @@
  *
  * Weights (sum = 100):
  *   keywordRelevance    22%
- *   formatParsability   18%
+ *   formatParsability   16%
  *   impactLanguage      15%
  *   sectionCompleteness 12%
- *   roleAlignment       12%
+ *   roleAlignment       10%
  *   contactInfo          8%
- *   readability          7%
+ *   readability          6%
  *   atsAntiPatterns      6%
+ *   enterpriseImpact     5%
  */
 
 import { analyzeKeywords }      from "./analyzers/keywordAnalyzer.js";
@@ -26,13 +27,13 @@ import { analyzeFormat }        from "./analyzers/formatAnalyzer.js";
 import { analyzeEnterpriseImpact } from "./analyzers/enterpriseImpactAnalyzer.js";
 
 export const WEIGHTS = {
-  keywordRelevance:     25,
-  formatParsability:    18,
+  keywordRelevance:     22,
+  formatParsability:    16,
   impactLanguage:       15,
   sectionCompleteness:  12,
-  roleAlignment:        12,
+  roleAlignment:        10,
   contactInfo:           8,
-  readability:           7,
+  readability:           6,
   atsAntiPatterns:       6,
   enterpriseImpact:     5,
 };
@@ -46,6 +47,222 @@ const getTier = (score) => {
 };
 
 const clamp = (value) => Math.round(Math.min(100, Math.max(0, Number(value) || 0)));
+
+const SECTION_HEADER_MAP = [
+  { key: "summary", label: "Summary", pattern: /^(summary|profile|objective|professional summary|career objective)\s*:?\s*$/i },
+  { key: "experience", label: "Experience", pattern: /^(experience|work experience|professional experience|employment|work history)\s*:?\s*$/i },
+  { key: "education", label: "Education", pattern: /^(education|academic|qualification|qualifications)\s*:?\s*$/i },
+  { key: "skills", label: "Skills", pattern: /^(skills|technical skills|core skills|technologies|tech stack|tools)\s*:?\s*$/i },
+  { key: "projects", label: "Projects", pattern: /^(projects|portfolio|side projects|personal projects|open.?source)\s*:?\s*$/i },
+  { key: "certifications", label: "Certifications", pattern: /^(certifications?|certificates?|licenses?|credentials?)\s*:?\s*$/i },
+];
+
+const getResumeLines = (text = "") => text
+  .split(/\r?\n/)
+  .map((text, index) => ({ index: index + 1, text: text.trim() }))
+  .filter((line) => line.text);
+
+const splitResumeSections = (text = "") => {
+  const sections = {};
+  let currentKey = "header";
+  let currentLabel = "Header";
+  let startLine = 1;
+
+  for (const { index, text: line } of getResumeLines(text)) {
+    const matched = SECTION_HEADER_MAP.find((section) => section.pattern.test(line));
+    if (matched) {
+      currentKey = matched.key;
+      currentLabel = matched.label;
+      startLine = index + 1;
+      if (!sections[currentKey]) sections[currentKey] = { key: currentKey, label: currentLabel, startLine, lines: [] };
+      continue;
+    }
+
+    if (!sections[currentKey]) sections[currentKey] = { key: currentKey, label: currentLabel, startLine, lines: [] };
+    sections[currentKey].lines.push({ index, text: line });
+  }
+
+  return sections;
+};
+
+const findKeywordLineMatches = (resumeText = "", keywords = []) => {
+  const lines = getResumeLines(resumeText);
+  return keywords.slice(0, 12).map((keyword) => {
+    const escaped = String(keyword).replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+    const regex = new RegExp(`\\b${escaped}\\b`, "i");
+    const matchedLine = lines.find((line) => regex.test(line.text));
+    return {
+      keyword,
+      status: matchedLine ? "found" : "missing",
+      line: matchedLine?.index || null,
+      evidence: matchedLine?.text || null,
+    };
+  });
+};
+
+const buildLineLevelIssues = (resumeText = "", analyzerResults = {}) => {
+  const issues = [];
+  const lines = getResumeLines(resumeText);
+  const weakPhrases = analyzerResults.impactLanguage?.weakPhrasesFound || [];
+  const missingKeywords = analyzerResults.keywordRelevance?.missingKeywords || [];
+
+  for (const phrase of weakPhrases) {
+    const line = lines.find((candidate) => candidate.text.toLowerCase().includes(String(phrase).toLowerCase()));
+    if (line) {
+      issues.push({
+        line: line.index,
+        section: "Impact Language",
+        severity: "high",
+        issue: `Weak phrase "${phrase}" reduces impact.`,
+        fix: "Rewrite this line with a direct action verb and a measurable result.",
+        evidence: line.text,
+      });
+    }
+  }
+
+  const bulletLines = lines.filter((line) => /^[-*•]/.test(line.text));
+  for (const line of bulletLines.slice(0, 40)) {
+    const wordCount = line.text.split(/\s+/).filter(Boolean).length;
+    const hasMetric = /(\d+\s*%|\$[\d,]+|\b\d{2,}(?:,\d{3})*\b|\d+x\b)/i.test(line.text);
+    const firstWord = line.text.replace(/^[-*•]\s*/, "").split(/\s+/)[0]?.toLowerCase();
+    const startsSoftly = ["worked", "helped", "assisted", "responsible", "supported"].includes(firstWord);
+
+    if (!hasMetric && wordCount >= 8) {
+      issues.push({
+        line: line.index,
+        section: "Experience",
+        severity: "medium",
+        issue: "Bullet has no measurable result.",
+        fix: "Add a number such as percentage improvement, revenue, users, volume, time saved, or team size.",
+        evidence: line.text,
+      });
+    }
+
+    if (startsSoftly) {
+      issues.push({
+        line: line.index,
+        section: "Experience",
+        severity: "medium",
+        issue: "Bullet starts with a weak verb.",
+        fix: "Start with a stronger verb such as Built, Led, Reduced, Automated, Improved, Shipped, or Scaled.",
+        evidence: line.text,
+      });
+    }
+  }
+
+  for (const keyword of missingKeywords.slice(0, 5)) {
+    issues.push({
+      line: null,
+      section: "Keyword Relevance",
+      severity: "high",
+      issue: `Missing job keyword: ${keyword}.`,
+      fix: "Add this only if truthful, preferably in Summary, Experience, or Projects with supporting context.",
+      evidence: null,
+    });
+  }
+
+  const seen = new Set();
+  return issues.filter((issue) => {
+    const key = `${issue.line}-${issue.issue}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 16);
+};
+
+const buildSectionScores = (resumeText = "", analyzerResults = {}) => {
+  const sections = splitResumeSections(resumeText);
+  const keyword = analyzerResults.keywordRelevance || {};
+  const impact = analyzerResults.impactLanguage || {};
+  const completeness = analyzerResults.sectionCompleteness || {};
+
+  const scoreSection = (key, label) => {
+    const section = sections[key];
+    const text = section?.lines.map((line) => line.text).join("\n") || "";
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    const bulletCount = section?.lines.filter((line) => /^[-*•]/.test(line.text)).length || 0;
+    const hasMetric = /(\d+\s*%|\$[\d,]+|\b\d{2,}(?:,\d{3})*\b|\d+x\b)/i.test(text);
+    const isMissing = (completeness.missingSections || []).some((name) => name.toLowerCase().includes(label.toLowerCase()));
+
+    let score = isMissing || !text.trim() ? 20 : 70;
+    const notes = [];
+
+    if (!text.trim()) notes.push(`${label} content is missing or too hard for ATS to identify.`);
+    if (wordCount >= 35) score += 10;
+    else if (key !== "skills" && key !== "education") notes.push(`${label} is thin; add more role-specific detail.`);
+    if (bulletCount >= 3) score += 10;
+    if ((key === "experience" || key === "projects") && hasMetric) score += 10;
+    if ((key === "experience" || key === "projects") && !hasMetric && text.trim()) notes.push("Add quantified outcomes to strengthen this section.");
+    if (key === "skills" && (keyword.skillOnlyKeywords || []).length > 3) {
+      score -= 10;
+      notes.push("Several skills are not supported elsewhere in the resume.");
+    }
+    if (key === "experience" && (impact.weakPhrasesFound || []).length > 0) {
+      score -= 8;
+      notes.push("Weak phrases appear in experience content.");
+    }
+
+    return {
+      key,
+      label,
+      score: clamp(score),
+      wordCount,
+      bulletCount,
+      notes,
+    };
+  };
+
+  return ["summary", "experience", "skills", "projects", "education", "certifications"]
+    .map((key) => scoreSection(key, SECTION_HEADER_MAP.find((section) => section.key === key)?.label || key));
+};
+
+const buildParserSimulation = (resumeText = "", analyzerResults = {}) => {
+  const contact = analyzerResults.contactInfo || {};
+  const sections = analyzerResults.sectionCompleteness || {};
+  const lines = getResumeLines(resumeText);
+  const firstNameLikeLine = lines.slice(0, 6).find((line) => /^[A-Z][a-zA-Z'-]+(?:\s[A-Z][a-zA-Z'-]+){1,3}$/.test(line.text));
+  const companyLines = lines.filter((line) => /\|/.test(line.text) && !/^[-*•]/.test(line.text)).slice(0, 8);
+  const dateMatches = [...resumeText.matchAll(/\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)?\.?\s?\d{4}\s*(?:-|–|to)\s*(?:Present|Current|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)?\.?\s?\d{4})\b/gi)]
+    .map((match) => match[0])
+    .slice(0, 8);
+
+  return {
+    name: firstNameLikeLine?.text || null,
+    email: contact.emailFound || null,
+    phone: contact.phoneFound || null,
+    location: contact.locationFound || null,
+    linkedin: contact.linkedinFound || null,
+    sectionsDetected: sections.presentSections || [],
+    missingSections: sections.missingSections || [],
+    companiesOrRoles: companyLines.map((line) => line.text),
+    dates: dateMatches,
+  };
+};
+
+const addImpactEstimates = (recommendations = [], dimensionScores = {}) => {
+  const scoreByDimension = {
+    "Keyword Relevance": dimensionScores.keywordRelevance,
+    "Format": dimensionScores.formatParsability,
+    "Impact Language": dimensionScores.impactLanguage,
+    "Section Completeness": dimensionScores.sectionCompleteness,
+    "Role Alignment": dimensionScores.roleAlignment,
+    "Contact Info": dimensionScores.contactInfo,
+    "Readability": dimensionScores.readability,
+    "ATS Anti-Patterns": dimensionScores.atsAntiPatterns,
+  };
+
+  return recommendations.map((rec) => {
+    const score = scoreByDimension[rec.dimension] ?? 75;
+    const estimatedScoreGain = rec.priority === "critical"
+      ? Math.max(8, Math.round((100 - score) * 0.22))
+      : rec.priority === "high"
+        ? Math.max(5, Math.round((100 - score) * 0.15))
+        : rec.priority === "medium"
+          ? Math.max(3, Math.round((100 - score) * 0.09))
+          : 1;
+    return { ...rec, estimatedScoreGain };
+  });
+};
 
 const buildRecommendations = (dimensionScores, analyzerResults, targetRole, templateMetadata = {}) => {
   const recs = [];
@@ -163,12 +380,18 @@ const buildRecommendations = (dimensionScores, analyzerResults, targetRole, temp
             impact: "Alignment gaps lower recruiter ranking even after passing ATS.",
           });
         } else if (analyzerRec) {
+          let impact = "Seniority mismatches trigger auto-rejection before human review.";
+          if ((analyzerWeakness || "").toLowerCase().includes("skills are listed") || (analyzerWeakness || "").toLowerCase().includes("skill is listed")) {
+            impact = "Skills listed without context or evidence are heavily discounted by modern ATS algorithms.";
+          } else if ((analyzerWeakness || "").toLowerCase().includes("title")) {
+            impact = "ATS parsers match role titles in your history against the target job description.";
+          }
           recs.push({
             priority: dimScore < 50 ? "high" : "medium",
             dimension: "Role Alignment",
             issue: analyzerWeakness || "Seniority or skills mismatch detected.",
             fix: analyzerRec,
-            impact: "Seniority mismatches trigger auto-rejection before human review.",
+            impact,
           });
         }
         break;
@@ -327,6 +550,18 @@ export const calculateAtsScore = (resumeInput = "", jobDescription = "", targetR
     overallScore -= Math.min(8, Math.round((unsupportedKeywordCount - supportedKeywordCount) * 0.75));
   }
 
+  const isPolishedResume =
+    dimensionScores.impactLanguage >= 80 &&
+    dimensionScores.contactInfo >= 90 &&
+    dimensionScores.readability >= 85 &&
+    dimensionScores.atsAntiPatterns >= 90 &&
+    dimensionScores.sectionCompleteness >= 50;
+  if (isPolishedResume) {
+    const metricBonus = Math.min(4, Math.floor((impact.quantifiedBulletCount || 0) / 2));
+    const evidenceBonus = Math.min(3, Math.floor((keyword.supportedKeywords || []).length / 4));
+    overallScore += 3 + metricBonus + evidenceBonus;
+  }
+
   // Hard cap at 97
   overallScore = Math.min(97, Math.round(overallScore));
 
@@ -342,7 +577,17 @@ export const calculateAtsScore = (resumeInput = "", jobDescription = "", targetR
     readability:         readability,
     atsAntiPatterns:     antiPattern,
   };
-  const recommendations = buildRecommendations(dimensionScores, analyzerResults, targetRole, templateMetadata);
+  const recommendations = addImpactEstimates(
+    buildRecommendations(dimensionScores, analyzerResults, targetRole, templateMetadata),
+    dimensionScores
+  );
+  const sectionScores = buildSectionScores(resumeText, analyzerResults);
+  const parserSimulation = buildParserSimulation(resumeText, analyzerResults);
+  const lineLevelIssues = buildLineLevelIssues(resumeText, analyzerResults);
+  const keywordEvidence = findKeywordLineMatches(resumeText, [
+    ...(keyword.matchedKeywords || []),
+    ...(keyword.missingKeywords || []),
+  ]);
 
   return {
     overallScore,
@@ -361,6 +606,7 @@ export const calculateAtsScore = (resumeInput = "", jobDescription = "", targetR
       contactScore:      dimensionScores.contactInfo,
       readabilityScore:  dimensionScores.readability,
       antiPatternScore:  dimensionScores.atsAntiPatterns,
+      enterpriseScore:   dimensionScores.enterpriseImpact,
     },
 
     recommendations,
@@ -403,6 +649,10 @@ export const calculateAtsScore = (resumeInput = "", jobDescription = "", targetR
         linkedin_found:     contact.linkedinFound     || null,
         email_professional: contact.emailProfessional !== false,
       },
+      sectionScores,
+      parserSimulation,
+      lineLevelIssues,
+      keywordEvidence,
       antiPatterns: {
         anti_patterns_found: antiPattern.antiPatternsFound || [],
         critical_issues:     antiPattern.criticalIssues    || [],
