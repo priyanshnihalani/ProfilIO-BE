@@ -442,3 +442,105 @@ Formatting Rules for nested or list content (IMPORTANT):
     }
     return parsed;
 };
+
+export const generateCoverLetter = async ({
+    resumeData,
+    jobTitle,
+    companyName,
+    jobDescription,
+    hiringManagerName,
+    companyLocation,
+    jobPostingUrl,
+    tone = "Professional",
+    instructions = ""
+}) => {
+    const systemPrompt = `
+You are an expert Executive Cover Letter Writer.
+Your task is to generate a highly tailored, one-page cover letter for a candidate based strictly on their provided resume and the target job details.
+
+CRITICAL TRUTHFULNESS RULES:
+- DO NOT invent, fabricate, or hallucinate any experience, jobs, companies, degrees, certifications, or metrics that are not explicitly present in the provided resume.
+- If the job description asks for a skill the candidate doesn't have, DO NOT claim they have it. Focus on their transferable skills.
+- The cover letter must be grounded 100% in the candidate's actual reality.
+
+COVER LETTER STRUCTURE:
+- Opening: Professional greeting (use hiring manager name if provided, otherwise a professional default). State the exact role applied for and the company.
+- Body Paragraph 1 (Interest & Hook): Why the candidate is interested in the company/role, connecting their core background to the company's mission or the job description.
+- Body Paragraph 2 (Value Proposition): Highlight 1-2 specific, relevant achievements or experiences from the candidate's resume that perfectly align with the job requirements. Use metrics if they exist in the resume.
+- Closing: Confident call to action requesting an interview, and a professional sign-off with the candidate's name.
+
+TONE: ${tone}
+${instructions ? `ADDITIONAL INSTRUCTIONS: ${instructions}` : ''}
+
+OUTPUT FORMAT:
+- Return ONLY the raw body text of the cover letter.
+- Do NOT include the sender's address, recipient's address, or the date at the top (the template engine will handle the header/metadata).
+- Start directly with the salutation (e.g., "Dear [Name],").
+- Do NOT use markdown formatting (no **, no ##, no \`\`\`).
+- Keep it concise. It MUST easily fit on one page. Maximum 4-5 short paragraphs.
+`;
+
+    // Extract minimal resume data for the prompt to save tokens and focus the AI
+    const candidateProfile = {
+        name: resumeData.fullName,
+        summary: resumeData.summary,
+        experience: resumeData.experience,
+        skills: resumeData.skills,
+        education: resumeData.education
+    };
+
+    const userPrompt = `
+TARGET JOB DETAILS:
+Job Title: ${jobTitle}
+Company: ${companyName}
+Hiring Manager: ${hiringManagerName || "Hiring Manager"}
+Location: ${companyLocation || "Not specified"}
+Job Description:
+${jobDescription || "Not provided (Write a strong general cover letter based on the job title)."}
+
+CANDIDATE RESUME:
+${JSON.stringify(candidateProfile, null, 2)}
+`;
+
+    const response = await createChatCompletion({
+        messages: [
+            { role: "system", content: systemPrompt.trim() },
+            { role: "user", content: userPrompt.trim() }
+        ],
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        temperature: 0.4,
+    });
+
+    const raw = response.choices[0]?.message?.content?.trim() || "";
+    return stripMarkdown(raw);
+};
+
+export const refineCoverLetter = async ({
+    currentContent,
+    instruction
+}) => {
+    const systemPrompt = `
+You are an expert Executive Cover Letter Writer.
+Your task is to refine the provided cover letter based on the user's specific instruction.
+
+CRITICAL RULES:
+- DO NOT invent new experience, skills, or metrics.
+- Keep the overall structure intact, just adjust the wording.
+- Return ONLY the raw updated body text of the cover letter.
+- Start directly with the salutation.
+- Do NOT use markdown formatting (no **, no ##, no \`\`\`).
+- Ensure it remains concise enough to fit on one page.
+`;
+
+    const response = await createChatCompletion({
+        messages: [
+            { role: "system", content: systemPrompt.trim() },
+            { role: "user", content: `Instruction: ${instruction}\n\nCurrent Cover Letter:\n${currentContent}` }
+        ],
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        temperature: 0.3,
+    });
+
+    const raw = response.choices[0]?.message?.content?.trim() || "";
+    return stripMarkdown(raw);
+};

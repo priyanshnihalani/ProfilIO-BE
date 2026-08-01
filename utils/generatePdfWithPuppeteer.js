@@ -12,10 +12,20 @@ function buildHtmlDocument(html, css) {
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="${GOOGLE_FONTS}" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
+  @page { size: A4; margin: 0; }
   *, *::before, *::after { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: white; }
+  html, body { margin: 0; padding: 0; background: white; width: 794px; height: 1122px; overflow: hidden; }
   .visual-page-break { display: none !important; }
+
+  /* Ensure top-level containers inside body fit within single A4 page */
+  body > div {
+    max-height: 1122px;
+    box-sizing: border-box;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
 
   /* Tailwind is not loaded in Puppeteer — these rules replicate the
      critical classes used on .resume-page and .resume-document */
@@ -50,8 +60,16 @@ function buildHtmlDocument(html, css) {
 }
 
 export async function generatePdfFromHtml(html, css = "") {
+    let executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
+    
+    // If we're on Windows, ignore the Linux chromium path from .env and use the bundled browser
+    if (process.platform === 'win32') {
+        delete process.env.PUPPETEER_EXECUTABLE_PATH; // Prevent Puppeteer from forcefully reading this!
+        executablePath = await puppeteer.executablePath();
+    }
+
     const browser = await puppeteer.launch({
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        executablePath,
         headless: "shell",
         args: [
             "--no-sandbox", 

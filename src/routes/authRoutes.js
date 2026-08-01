@@ -112,20 +112,56 @@ router.post('/login', async (req, res) => {
         }
         
         if (normalizedEmail === BUILT_IN_ADMIN_EMAIL && BUILT_IN_ADMIN_EMAIL && BUILT_IN_ADMIN_PASSWORD && password === BUILT_IN_ADMIN_PASSWORD) {
-            const token = createToken({ ...adminUser, email: BUILT_IN_ADMIN_EMAIL });
+            let dbAdmin = await prisma.user.findUnique({ where: { email: BUILT_IN_ADMIN_EMAIL } });
+            if (!dbAdmin) {
+                dbAdmin = await prisma.user.create({
+                    data: {
+                        id: 'master-admin',
+                        email: BUILT_IN_ADMIN_EMAIL,
+                        fullName: 'Master Admin',
+                        passwordHash: await bcrypt.hash(BUILT_IN_ADMIN_PASSWORD, 10),
+                        planType: 'PRO'
+                    }
+                });
+            } else if (dbAdmin.planType !== 'PRO') {
+                dbAdmin = await prisma.user.update({
+                    where: { email: BUILT_IN_ADMIN_EMAIL },
+                    data: { planType: 'PRO' }
+                });
+            }
+            const userWithRole = { ...dbAdmin, role: 'ADMIN' };
+            const token = createToken(userWithRole);
             return res.json({
                 success: true,
                 token,
-                user: serializeUser({ ...adminUser, email: BUILT_IN_ADMIN_EMAIL }),
+                user: serializeUser(userWithRole),
             });
         }
 
         if (ADMIN_EMAIL && ADMIN_PASSWORD_HASH && normalizedEmail === ADMIN_EMAIL && await bcrypt.compare(password, ADMIN_PASSWORD_HASH)) {
-            const token = createToken(adminUser);
+            let dbAdmin = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL } });
+            if (!dbAdmin) {
+                dbAdmin = await prisma.user.create({
+                    data: {
+                        id: 'env-admin',
+                        email: ADMIN_EMAIL,
+                        fullName: 'Environment Admin',
+                        passwordHash: ADMIN_PASSWORD_HASH,
+                        planType: 'PRO'
+                    }
+                });
+            } else if (dbAdmin.planType !== 'PRO') {
+                dbAdmin = await prisma.user.update({
+                    where: { email: ADMIN_EMAIL },
+                    data: { planType: 'PRO' }
+                });
+            }
+            const userWithRole = { ...dbAdmin, role: 'ADMIN' };
+            const token = createToken(userWithRole);
             return res.json({ 
                 success: true, 
                 token, 
-                user: serializeUser(adminUser),
+                user: serializeUser(userWithRole),
             });
         }
 
@@ -149,21 +185,20 @@ router.post('/login', async (req, res) => {
     }
 });
 
-/**
- * GET /api/auth/me
- */
 router.get('/me', requireAuth, async (req, res) => {
     try {
-        if (req.user.id === 'master-admin') {
-            return res.json({ success: true, user: serializeUser(adminUser) });
-        }
-        
         const user = await prisma.user.findUnique({ where: { id: req.user.id } });
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found.' });
         }
 
-        res.json({ success: true, user: serializeUser(user) });
+        // Re-inject role if they are an admin
+        let role = undefined;
+        if (req.user.role === 'ADMIN' || req.user.id === 'master-admin' || req.user.id === 'env-admin') {
+            role = 'ADMIN';
+        }
+
+        res.json({ success: true, user: serializeUser({ ...user, role }) });
     } catch (error) {
         console.error('Auth verify error:', error);
         res.status(500).json({ success: false, message: 'Failed to verify token.' });

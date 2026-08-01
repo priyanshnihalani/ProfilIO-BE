@@ -16,6 +16,7 @@ import authRoutes from "./src/routes/authRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
 import feedbackRoutes from "./src/routes/feedbackRoutes.js";
 import resumeRoutes from "./src/routes/resumeRoutes.js";
+import coverLetterRoutes from "./src/routes/coverLetterRoutes.js";
 import { consumeUsage } from "./src/middleware/auth.js";
 import { requireAuth } from "./src/middleware/auth.js";
 import { atsRateLimit } from "./src/middleware/rateLimit.js";
@@ -50,6 +51,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/resumes", resumeRoutes);
+app.use("/api/cover-letter", coverLetterRoutes);
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -434,6 +436,8 @@ app.use((error, _req, res, _next) => {
     res.status(error.message === "Origin is not allowed by CORS." ? 403 : 500).json({
         success: false,
         message: error.message || "Internal server error.",
+    });
+});
 app.listen(port, () => {
     console.log(
         `🚀 Server running on port ${port}`
