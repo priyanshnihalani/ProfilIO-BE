@@ -212,11 +212,21 @@ app.post(
                 });
             }
 
+            const resumeText = buildResumeText(form);
+            const scoreResult = calculateAtsScore(
+                resumeText,
+                form.jobDescription || "",
+                form.targetRole || "",
+                {}
+            );
+            const atsContext = buildAtsContext(scoreResult, null);
+
             const improvedContent =
                 await improveResumeSection({
                     section,
                     content,
                     targetRole: form.targetRole,
+                    atsContext,
                 });
 
             await req.consumeQuota();
