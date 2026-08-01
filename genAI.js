@@ -14,6 +14,7 @@ Requirements:
 - DO NOT use any generic buzzwords (results-driven, passionate, team player, synergy, leverage, innovative, proactive, detail-oriented, self-starter).
 - Do not invent fake experience.
 - Incorporate keywords naturally. DO NOT keyword stuff. Ensure the phrasing reads organically.
+- CRITICAL: You MUST retain all specific technology names, languages, and frameworks mentioned in the original summary (e.g. 'React', 'Node.js', 'Python'). Do NOT replace specific technologies with generic phrases like 'modern frameworks' or 'development tools'.
 - Optimize toward a 90+ ATS score by clarifying role fit, impact, and supported keywords only.
 - Return ONLY improved text
 `,
@@ -28,6 +29,7 @@ Requirements:
 - Preserve the exact same jobs in the same order. Do NOT add, remove, merge, or split jobs.
 - Preserve the exact same number of bullet points under each job.
 - Improve wording, clarity, action verbs, ATS readability, and supported keyword placement. DO NOT keyword stuff.
+- CRITICAL: You MUST retain all specific technology names, programming languages, tools, frameworks, databases, cloud platforms, and methodologies mentioned in the original text (e.g., if the original bullet mentions 'React', 'Node.js', 'AWS', 'Docker', or 'Kubernetes', the improved bullet MUST also include those exact terms). Do NOT substitute specific technology names with generic terms (do NOT replace 'AWS' with 'cloud infrastructure', or 'Docker' with 'containerization').
 - CRITICAL: Use existing numbers/metrics when already present. Always use digits for numbers (e.g., '5' instead of 'five'). Do NOT invent new metrics, and DO NOT remove any existing metrics.
 - If a bullet has no metric, make it specific and outcome-oriented without fabricating numbers.
 - Every bullet point must start immediately with a strong, active action verb. Do NOT start with adverbs like 'Successfully'.
@@ -67,6 +69,7 @@ Requirements:
 - Preserve the exact same projects in the same order. Do NOT add, remove, merge, or split projects.
 - Preserve the exact same number of bullet points under each project.
 - Improve wording, clarity, action verbs, ATS readability, and supported keyword placement. DO NOT keyword stuff.
+- CRITICAL: You MUST retain all specific technology names, programming languages, tools, frameworks, databases, cloud platforms, and methodologies mentioned in the original text (e.g., if the original text mentions 'React', 'Node.js', 'PostgreSQL', or 'Git', the improved text MUST also include those exact terms). Do NOT substitute specific technology names with generic terms.
 - CRITICAL: Use existing numbers/metrics when already present. Always use digits for numbers (e.g., '5' instead of 'five'). Do NOT invent new metrics, and DO NOT remove any existing metrics.
 - If a bullet has no metric, make it specific and outcome-oriented without fabricating numbers.
 - Every bullet point must start immediately with a strong, active action verb. Do NOT start with adverbs like 'Successfully'.

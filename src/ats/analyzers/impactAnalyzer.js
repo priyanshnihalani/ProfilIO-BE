@@ -22,6 +22,7 @@ const STRONG_ACTION_VERBS = new Set([
   "facilitated","formulated","grew","hired","identified","introduced",
   "leveraged","minimized","partnered","prioritized","produced","proposed",
   "published","recruited","researched","shaped","simplified","solved","tested",
+  "provisioned","standardized",
   // FAANG-specific enterprise verbs
   "orchestrated at scale","architected globally","transformed enterprise",
   "scaled microservices","revolutionized infrastructure","dominated markets",

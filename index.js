@@ -391,8 +391,24 @@ function buildAtsContext(scoreResult, selectedMissingKeywords = null) {
   };
 }
 
+function normalizeSectionSpacing(section, text = "") {
+  if (section !== "experience" && section !== "projects") return text;
+  const lines = String(text || "").split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const normalizedLines = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const isHeader = line.includes("|") && !/^\s*[-*•]/.test(line);
+    if (isHeader && i > 0) {
+      normalizedLines.push("");
+    }
+    normalizedLines.push(line);
+  }
+  return normalizedLines.join("\n");
+}
+
 function countResumeBlocks(section, value = "") {
-  const text = String(value || "").trim();
+  const normalized = normalizeSectionSpacing(section, value);
+  const text = String(normalized || "").trim();
   if (!text) return { entries: 0, bullets: [] };
 
   const blocks = text
@@ -421,14 +437,17 @@ function preserveResumeInventory(section, originalContent = "", improvedContent 
   if (section === "skills") return originalContent;
   if (section !== "experience" && section !== "projects") return improvedContent;
 
-  const originalCounts = countResumeBlocks(section, originalContent);
-  const improvedCounts = countResumeBlocks(section, improvedContent);
+  const normOriginal = normalizeSectionSpacing(section, originalContent);
+  const normImproved = normalizeSectionSpacing(section, improvedContent);
+
+  const originalCounts = countResumeBlocks(section, normOriginal);
+  const improvedCounts = countResumeBlocks(section, normImproved);
   const sameEntries = originalCounts.entries === improvedCounts.entries;
   const sameBullets =
     originalCounts.bullets.length === improvedCounts.bullets.length &&
     originalCounts.bullets.every((count, index) => count === improvedCounts.bullets[index]);
 
-  return sameEntries && sameBullets ? improvedContent : originalContent;
+  return sameEntries && sameBullets ? normImproved : originalContent;
 }
 
 app.use((error, _req, res, _next) => {
