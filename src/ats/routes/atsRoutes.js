@@ -2,7 +2,7 @@ import express from "express";
 import { calculateAtsScore } from "../AtsEngine.js";
 import { generateRecommendations } from "../ai/generateRecommendations.js";
 import { autoImproveResume } from "../ai/autoImprove.js";
-import { consumeUsage, requireAuth } from "../../middleware/auth.js";
+import { checkQuota, requireAuth } from "../../middleware/auth.js";
 import { atsRateLimit } from "../../middleware/rateLimit.js";
 
 const router = express.Router();
@@ -69,7 +69,7 @@ router.post("/analyze", requireAuth, atsRateLimit, async (req, res) => {
 /**
  * POST /api/ats/auto-improve
  */
-router.post("/auto-improve", consumeUsage("aiImprovements"), atsRateLimit, async (req, res) => {
+router.post("/auto-improve", checkQuota("aiImprovements"), atsRateLimit, async (req, res) => {
     try {
         const { resumeData, missingKeywords, recommendedSkills } = req.body;
         if (!resumeData) return res.status(400).json({ success: false, message: "resumeData is required" });
@@ -78,7 +78,18 @@ router.post("/auto-improve", consumeUsage("aiImprovements"), atsRateLimit, async
         if (improvedData && Object.prototype.hasOwnProperty.call(resumeData, "skills")) {
             improvedData.skills = resumeData.skills;
         }
-        return res.json({ success: true, improvedData });
+        
+        await req.consumeQuota();
+        
+        return res.json({ 
+            success: true, 
+            improvedData,
+            quota: {
+                limit: req.user.aiImprovementsLimit,
+                used: req.user.aiImprovements + 1,
+                remaining: Math.max(0, req.user.aiImprovementsLimit - (req.user.aiImprovements + 1))
+            }
+        });
     } catch (error) {
         console.error("Error in ATS auto-improve:", error);
         res.status(500).json({ success: false, message: "Failed to auto-improve resume." });

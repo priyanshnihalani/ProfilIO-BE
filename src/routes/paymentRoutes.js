@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { requireAuth } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { config } from '../config.js';
+import { PLAN_LIMITS } from '../config/plans.js';
 
 const router = express.Router();
 const JWT_SECRET = config.jwtSecret;
@@ -39,17 +40,24 @@ const serializeUser = (user) => ({
     aiImprovements: user.aiImprovements,
     paymentDate: user.paymentDate,
     membershipEndDate: user.membershipEndDate,
+    aiDailyLimit: PLAN_LIMITS[user.planType]?.aiDailyLimit ?? 5,
+    resumeProfileLimit: PLAN_LIMITS[user.planType]?.resumeProfileLimit ?? 1,
+    weeklyDownloadLimit: PLAN_LIMITS[user.planType]?.weeklyDownloadLimit ?? 1,
 });
 
 /**
  * POST /api/payments/free-upgrade
- * Upgrades user to FREE or STARTER plan (both are now free)
+ * Upgrades user to FREE plan
  */
 router.post('/free-upgrade', requireAuth, async (req, res) => {
   try {
     const { planType } = req.body;
-    if (planType !== 'FREE' && planType !== 'STARTER') {
+    if (planType !== 'FREE') {
       return res.status(400).json({ success: false, message: 'Invalid plan type for free upgrade.' });
+    }
+
+    if (req.user.id === 'master-admin') {
+      return res.status(400).json({ success: false, message: 'Master Admin cannot change plans.' });
     }
 
     const updatedUser = await prisma.user.update({
@@ -77,11 +85,11 @@ router.post('/free-upgrade', requireAuth, async (req, res) => {
 
 /**
  * POST /api/payments/create-order
- * Creates a Razorpay order for ₹299 (PRO plan)
+ * Creates a Razorpay order for ₹149 (PRO plan)
  */
 router.post('/create-order', requireAuth, async (req, res) => {
   try {
-    const amount = 299 * 100; // 299 INR in paise
+    const amount = 149 * 100; // 149 INR in paise
     const receipt = `receipt_pro_${Date.now()}`;
 
     // If keys are dummy, return a mock order for visual testing
@@ -117,7 +125,7 @@ router.post('/create-order', requireAuth, async (req, res) => {
     return res.json({
       success: true,
       orderId: `order_mock_${Math.random().toString(36).substring(2, 11)}`,
-      amount: 299 * 100,
+      amount: 149 * 100,
       currency: 'INR',
       key: RAZORPAY_KEY_ID,
       isMock: true,
@@ -158,8 +166,8 @@ router.post('/verify', requireAuth, async (req, res) => {
       data: {
         planType: 'PRO',
         paymentDate: new Date(),
-        // Add 1 year membership for PRO
-        membershipEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        // Add 1 month membership for PRO
+        membershipEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         resumeDownloads: 0,
         aiImprovements: 0,
       },

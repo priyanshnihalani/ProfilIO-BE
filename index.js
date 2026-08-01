@@ -15,6 +15,7 @@ import atsRoutes from "./src/ats/routes/atsRoutes.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
 import feedbackRoutes from "./src/routes/feedbackRoutes.js";
+import resumeRoutes from "./src/routes/resumeRoutes.js";
 import { consumeUsage } from "./src/middleware/auth.js";
 import { requireAuth } from "./src/middleware/auth.js";
 import { atsRateLimit } from "./src/middleware/rateLimit.js";
@@ -48,6 +49,7 @@ app.use("/api/ats", atsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/feedback", feedbackRoutes);
+app.use("/api/resumes", resumeRoutes);
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -162,6 +164,8 @@ app.post("/api/resume/generate-pdf", consumeUsage("resumeDownloads"), async (req
         const pdfBuffer = await generatePdfFromHtml(html, css || "");
         const safeName = (filename || "resume.pdf").replace(/[^\w.\-]/g, "_");
 
+        await req.consumeQuota();
+
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader(
             "Content-Disposition",
@@ -212,6 +216,8 @@ app.post(
                     content,
                     targetRole: form.targetRole,
                 });
+
+            await req.consumeQuota();
 
             return res.status(200).json({
                 success: true,
@@ -331,6 +337,8 @@ app.post("/api/resume/score-and-improve", consumeUsage("aiImprovements"), atsRat
     const improvedResumeText = buildResumeText(improvedForm);
     const finalScoreResult = calculateAtsScore(improvedResumeText, jobDescription || "", form.targetRole, {}, selectedMissingKeywords);
 
+    await req.consumeQuota();
+
     return res.status(200).json({
       success: true,
       data: {
@@ -426,9 +434,6 @@ app.use((error, _req, res, _next) => {
     res.status(error.message === "Origin is not allowed by CORS." ? 403 : 500).json({
         success: false,
         message: error.message || "Internal server error.",
-    });
-});
-
 app.listen(port, () => {
     console.log(
         `🚀 Server running on port ${port}`

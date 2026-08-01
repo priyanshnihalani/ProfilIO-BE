@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { requireAuth } from '../middleware/auth.js';
 import { prisma } from '../lib/prisma.js';
 import { config } from '../config.js';
+import { PLAN_LIMITS } from '../config/plans.js';
 
 const router = express.Router();
 const JWT_SECRET = config.jwtSecret;
@@ -23,6 +24,9 @@ const serializeUser = (user) => ({
     lastDownloadReset: user.lastDownloadReset,
     paymentDate: user.paymentDate,
     membershipEndDate: user.membershipEndDate,
+    aiDailyLimit: PLAN_LIMITS[user.planType]?.aiDailyLimit ?? 5,
+    resumeProfileLimit: PLAN_LIMITS[user.planType]?.resumeProfileLimit ?? 1,
+    weeklyDownloadLimit: PLAN_LIMITS[user.planType]?.weeklyDownloadLimit ?? 1,
 });
 
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
