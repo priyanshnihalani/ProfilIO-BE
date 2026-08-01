@@ -243,6 +243,7 @@ CRITICAL FORMATTING RULES — YOU MUST FOLLOW THESE:
 - Preserve the user's existing skills, jobs, projects, and bullet counts.
 - Never claim tools, platforms, domains, certifications, companies, metrics, or responsibilities that are not supported by the current content.
 - DO NOT add or suggest any extra skills or projects.
+- CRITICAL INDUSTRY RELEVANCE RULE: Only weave in missing keywords that are strictly relevant and industry-appropriate for a "${targetRole || 'specified'}" role. Do NOT randomly add keywords that do not match the standard responsibilities or context of this industry.
 - Use strictly professional language. DO NOT add comments or warnings about the resume layout type (e.g., multicolumn or single column).
 - OUTPUT ONLY THE ACTUAL RESUME CONTENT. NO PREAMBLE. NO EXPLANATION. NO "Here is the improved..." TEXT. JUST THE RAW OUTPUT.`;
 
