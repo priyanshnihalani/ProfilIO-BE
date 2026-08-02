@@ -20,8 +20,8 @@ import { clampScore, validateScoreRequest, normalizeModelObject } from "../src/a
 // ─── Resume fixtures ──────────────────────────────────────────────────────────
 
 const DEVOPS_RESUME = `
-John Smith
-john.smith@gmail.com | +1 (512) 555-0192 | Austin, TX | linkedin.com/in/johnsmith
+Priyansh Smith
+priyansh.smith@gmail.com | +1 (512) 555-0192 | Austin, TX | linkedin.com/in/priyanshsmith
 
 SUMMARY
 Senior DevOps Engineer with 8 years of experience designing and operating
@@ -325,7 +325,7 @@ test("[keywordAnalyzer] detects stuffing in stuffed resume", () => {
 
 test("[keywordAnalyzer] unsupported skill keywords do not inflate ATS score", () => {
   const baseResume = `
-Jane Doe
+Jane Nihalani
 jane@example.com | (555) 111-2222 | Dallas, TX
 
 SUMMARY
