@@ -182,7 +182,7 @@ router.post('/generate-pdf', requireAuth, requirePremium, async (req, res) => {
 
         const safeFilename = (filename || "Cover_Letter").replace(/[^a-zA-Z0-9_-]/g, '_');
         
-        const pdfBuffer = await generatePdfFromHtml(html, css);
+        const pdfBuffer = await generatePdfFromHtml(html, css, true);
         
         res.set({
             'Content-Type': 'application/pdf',

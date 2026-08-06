@@ -3,7 +3,7 @@ import puppeteer from "puppeteer";
 const GOOGLE_FONTS =
     "https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap";
 
-function buildHtmlDocument(html, css) {
+function buildHtmlDocument(html, css, isCoverLetter = false) {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,6 +16,8 @@ function buildHtmlDocument(html, css) {
 <style>
   @page { size: A4; margin: 0; }
   *, *::before, *::after { box-sizing: border-box; }
+  
+  ${isCoverLetter ? `
   html, body { margin: 0; padding: 0; background: white; width: 794px; height: 1122px; overflow: hidden; }
   .visual-page-break { display: none !important; }
 
@@ -26,6 +28,15 @@ function buildHtmlDocument(html, css) {
     page-break-inside: avoid;
     break-inside: avoid;
   }
+  ` : `
+  html, body { margin: 0; padding: 0; background: white; width: 794px; }
+  .visual-page-break { display: none !important; }
+
+  /* Ensure top-level containers inside body flow naturally */
+  body > div {
+    box-sizing: border-box;
+  }
+  `}
 
   /* Tailwind is not loaded in Puppeteer — these rules replicate the
      critical classes used on .resume-page and .resume-document */
@@ -59,7 +70,7 @@ function buildHtmlDocument(html, css) {
 </html>`;
 }
 
-export async function generatePdfFromHtml(html, css = "") {
+export async function generatePdfFromHtml(html, css = "", isCoverLetter = false) {
     let executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
     
     // If we're on Windows, ignore the Linux chromium path from .env and use the bundled browser
@@ -82,7 +93,7 @@ export async function generatePdfFromHtml(html, css = "") {
 
     try {
         const page = await browser.newPage();
-        await page.setContent(buildHtmlDocument(html, css), {
+        await page.setContent(buildHtmlDocument(html, css, isCoverLetter), {
             waitUntil: "networkidle0",
         });
 
