@@ -27,6 +27,7 @@ INSTRUCTIONS:
 2. Preserve and organize existing skills. Do NOT add, remove, or replace skills.
 3. Rewrite the Experience bullets:
    - Incorporate only truthful missing keywords naturally. DO NOT keyword stuff. Ensure the phrasing reads organically.
+   - CRITICAL TECHNOLOGY / SKILL RULE: Do NOT add or weave in any new technical skills, programming languages, tools, databases, frameworks, or cloud platforms (such as Vue.js, GraphQL, AWS, etc.) that are NOT already explicitly mentioned in the original text. You may weave in missing keywords ONLY if they are soft skills, general concepts, or methodologies (e.g., CI/CD, Agile, unit testing, scalability, collaboration), or if they are already mentioned in the original text.
    - Preserve the exact same jobs and the exact same number of bullets.
    - Replace weak passive verbs (e.g., 'helped', 'worked on') with strong action verbs ('engineered', 'spearheaded', 'led', 'managed'). Every bullet MUST start immediately with a strong action verb (no adverbs like 'Successfully').
    - CRITICAL: Use existing numbers/metrics when already present. Always use digits for numbers (e.g., '5' instead of 'five'). Do NOT invent new metrics, and DO NOT remove any existing metrics.
