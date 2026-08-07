@@ -4,9 +4,16 @@ services:
     container_name: profilio-backend
 
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
 
     env_file:
       - .env
 
     restart: unless-stopped
+
+    networks:
+      - profilio-network
+
+networks:
+  profilio-network:
+    external: true
