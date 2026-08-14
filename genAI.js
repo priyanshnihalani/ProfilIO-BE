@@ -26,15 +26,15 @@ You are an expert ATS resume writer.
 Improve the work experience section.
 
 Requirements:
-- Strong action verbs
+- Strong, non-repetitive action verbs
 - Preserve the exact same jobs in the same order. Do NOT add, remove, merge, or split jobs.
 - Preserve the exact same number of bullet points under each job.
-- Improve wording, clarity, action verbs, ATS readability, and supported keyword placement. DO NOT keyword stuff.
+- Improve wording, clarity, using strong, non-repetitive action verbs, ATS readability, and supported keyword placement. DO NOT keyword stuff.
 - CRITICAL: You MUST retain all specific technology names, programming languages, tools, frameworks, databases, cloud platforms, and methodologies mentioned in the original text (e.g., if the original bullet mentions 'React', 'Node.js', 'AWS', 'Docker', or 'Kubernetes', the improved bullet MUST also include those exact terms). Do NOT substitute specific technology names with generic terms (do NOT replace 'AWS' with 'cloud infrastructure', or 'Docker' with 'containerization').
 - CRITICAL: DO NOT add, weave in, or mention any new technical skills, programming languages, databases, cloud platforms, or specific tools (such as Vue.js, GraphQL, AWS, etc.) that are NOT already explicitly mentioned in the original experience text. You may weave in missing keywords from the ATS Analysis Context ONLY if they are soft skills, general concepts, or methodologies (e.g., CI/CD, Agile, unit testing, scalability, collaboration), or if the technology is already mentioned in the original experience text. Under no circumstances should you claim proficiency or experience in technologies that the candidate did not explicitly list in the original text.
 - CRITICAL: Use existing numbers/metrics when already present. Always use digits for numbers (e.g., '5' instead of 'five'). Do NOT invent new metrics, and DO NOT remove any existing metrics.
 - If a bullet has no metric, make it specific and outcome-oriented without fabricating numbers.
-- Every bullet point must start immediately with a strong, active action verb. Do NOT start with adverbs like 'Successfully'.
+- Every bullet point must start immediately with a strong, active action verb. Do NOT start with adverbs like 'Successfully'. CRITICAL: Do NOT repeat the same action verb (e.g., 'Developed', 'Led', 'Designed', 'Managed') at the beginning of multiple bullet points in this section; use a wide, diverse variety of active verbs.
 - Every bullet point must start with a capital letter and end with a period.
 - Bullet points must be concise and descriptive, between 12 and 25 words in length.
 - DO NOT use any generic buzzwords (results-driven, passionate, team player, synergy, leverage, innovative, proactive, detail-oriented, self-starter).
@@ -70,12 +70,12 @@ Requirements:
 - Highlight technical impact
 - Preserve the exact same projects in the same order. Do NOT add, remove, merge, or split projects.
 - Preserve the exact same number of bullet points under each project.
-- Improve wording, clarity, action verbs, ATS readability, and supported keyword placement. DO NOT keyword stuff.
+- Improve wording, clarity, using strong, non-repetitive action verbs, ATS readability, and supported keyword placement. DO NOT keyword stuff.
 - CRITICAL: You MUST retain all specific technology names, programming languages, tools, frameworks, databases, cloud platforms, and methodologies mentioned in the original text (e.g., if the original text mentions 'React', 'Node.js', 'PostgreSQL', or 'Git', the improved text MUST also include those exact terms). Do NOT substitute specific technology names with generic terms.
 - CRITICAL: DO NOT add, weave in, or mention any new technical skills, programming languages, databases, cloud platforms, or specific tools (such as Vue.js, GraphQL, AWS, etc.) that are NOT already explicitly mentioned in the original projects text. You may weave in missing keywords from the ATS Analysis Context ONLY if they are soft skills, general concepts, or methodologies (e.g., CI/CD, Agile, unit testing, scalability, collaboration), or if the technology is already mentioned in the original projects text. Under no circumstances should you claim proficiency or experience in technologies that the candidate did not explicitly list in the original text.
 - CRITICAL: Use existing numbers/metrics when already present. Always use digits for numbers (e.g., '5' instead of 'five'). Do NOT invent new metrics, and DO NOT remove any existing metrics.
 - If a bullet has no metric, make it specific and outcome-oriented without fabricating numbers.
-- Every bullet point must start immediately with a strong, active action verb. Do NOT start with adverbs like 'Successfully'.
+- Every bullet point must start immediately with a strong, active action verb. Do NOT start with adverbs like 'Successfully'. CRITICAL: Do NOT repeat the same action verb (e.g., 'Developed', 'Led', 'Designed', 'Managed') at the beginning of multiple bullet points in this section; use a wide, diverse variety of active verbs.
 - Every bullet point must start with a capital letter and end with a period.
 - Bullet points must be concise and descriptive, between 12 and 25 words in length.
 - DO NOT use any generic buzzwords (results-driven, passionate, team player, synergy, leverage, innovative, proactive, detail-oriented, self-starter).
@@ -146,6 +146,7 @@ Requirements:
 - Focus on transferable skills and leadership
 - Professional tone
 - ATS optimized
+- Every bullet point must start immediately with a strong, active action verb. CRITICAL: Do NOT repeat the same action verb at the beginning of multiple bullet points in this section; use a wide, diverse variety of active verbs.
 - CRITICAL: DO NOT add, weave in, or mention any new technical skills, programming languages, databases, cloud platforms, or specific tools (such as Vue.js, GraphQL, AWS, etc.) that are NOT already explicitly mentioned in the original volunteer work text.
 - Return ONLY improved text
 `,
@@ -251,6 +252,7 @@ CRITICAL FORMATTING RULES — YOU MUST FOLLOW THESE:
 - Preserve the user's existing skills, jobs, projects, and bullet counts.
 - Never claim tools, platforms, domains, certifications, companies, metrics, or responsibilities that are not supported by the current content.
 - DO NOT add or suggest any extra skills or projects.
+- CRITICAL ACTION VERBS RULE: When improving resume sections (specifically Work Experience, Projects, or Volunteer Work), DO NOT use repetitive action verbs. Do NOT repeat the same action verb to start consecutive or multiple bullet points within the same section or item (e.g., do not start multiple lines with 'Led', 'Developed', 'Designed', 'Managed', 'Created', 'Implemented', etc.). Use a wide, diverse, and varied selection of strong, active verbs throughout.
 - CRITICAL TECHNOLOGY / SKILL RULE: Do NOT add, weave in, or mention any new technical skills, programming languages, tools, databases, frameworks, or cloud platforms (such as Vue.js, GraphQL, AWS, etc.) that are NOT already explicitly mentioned in the original text of this section. You may weave in missing keywords from the ATS Analysis Context ONLY if they are soft skills, general concepts, or methodologies (e.g., CI/CD, Agile, unit testing, scalability, collaboration), or if they are already mentioned in the candidate's original text. Under no circumstances should you claim proficiency or experience in new technologies/tools that the candidate did not list in the original text of this section.
 - CRITICAL INDUSTRY RELEVANCE RULE: Only weave in missing keywords that are strictly relevant and industry-appropriate for a "${targetRole || 'specified'}" role. Do NOT randomly add keywords that do not match the standard responsibilities or context of this industry.
 - Use strictly professional language. DO NOT add comments or warnings about the resume layout type (e.g., multicolumn or single column).
