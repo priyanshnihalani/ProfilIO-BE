@@ -73,10 +73,16 @@ function buildHtmlDocument(html, css, isCoverLetter = false) {
 export async function generatePdfFromHtml(html, css = "", isCoverLetter = false) {
     let executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
     
-    // If we're on Windows, ignore the Linux chromium path from .env and use the bundled browser
+    // If we're on Windows, ignore the Linux chromium path from .env and use Chrome/bundled browser
     if (process.platform === 'win32') {
         delete process.env.PUPPETEER_EXECUTABLE_PATH; // Prevent Puppeteer from forcefully reading this!
-        executablePath = await puppeteer.executablePath();
+        const fs = await import('fs');
+        const defaultChrome = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+        if (fs.existsSync(defaultChrome)) {
+            executablePath = defaultChrome;
+        } else {
+            executablePath = await puppeteer.executablePath();
+        }
     }
 
     const browser = await puppeteer.launch({

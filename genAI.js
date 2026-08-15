@@ -408,9 +408,15 @@ Required JSON structure:
     "email": "string",
     "phone": "string",
     "location": "string",
-    "website": "string",
-    "linkedin": "string",
-    "github": "string",
+    "website": "string (the portfolio/website URL for backward compatibility)",
+    "linkedin": "string (the LinkedIn URL for backward compatibility)",
+    "github": "string (the GitHub URL for backward compatibility)",
+    "websiteLabel": "string (custom label or name of portfolio link, e.g., 'Portfolio', 'Personal Website', 'My Site')",
+    "websiteLink": "string (the actual portfolio URL)",
+    "linkedinLabel": "string (custom label or name of LinkedIn link, e.g., 'LinkedIn', 'Profile')",
+    "linkedinLink": "string (the actual LinkedIn URL)",
+    "githubLabel": "string (custom label or name of GitHub link, e.g., 'GitHub', 'My Code')",
+    "githubLink": "string (the actual GitHub URL)",
     "targetRole": "string (the person's current or most recent job title — infer from experience if no explicit target role is stated)",
     "summary": "string",
     "experience": "string",
@@ -426,7 +432,7 @@ Required JSON structure:
 
 Formatting Rules for nested or list content (IMPORTANT):
 - experience: Format each job exactly as "Title | Company | Location | Dates\\n- Bullet 1\\n- Bullet 2" (separated by blank lines). Ensure "Dates" are copy-pasted verbatim from the input.
-- education: Format each degree as "Degree | School | Dates | Details". Ensure "Dates" are copy-pasted verbatim from the input.
+- education: Format each degree as "Degree | School | Location | Dates". Ensure "Dates" are copy-pasted verbatim from the input.
 - projects: Format each project as "Project Name | Project Details\\n- Bullet 1\\n- Bullet 2\\n\\n(blank line between projects — REQUIRED)".
 - skills: Comma-separated list.
 - certifications: One per line "Name | Organization | Year". Ensure "Year" is copy-pasted verbatim from the input.
