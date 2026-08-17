@@ -430,6 +430,14 @@ You are an expert ATS resume parser.
 Extract the resume information from the raw text and map it STRICTLY to the following JSON format.
 If any field is missing from the resume, leave it as an empty string.
 
+CRITICAL BULLET PRESERVATION RULE:
+- You MUST extract EVERY SINGLE bullet point under EVERY job and EVERY project.
+- Do NOT omit, skip, summarize, combine, or truncate any bullet points under any position or project. Every single job and project must retain 100% of its original bullet points.
+- If a project or job has bullet points starting with "Technologies:", "Tech Stack:", or any technical details, retain those exact bullet points verbatim (e.g. "- Technologies: React Native, Redux-Saga").
+
+CRITICAL SKILLS CATEGORY PRESERVATION RULE:
+- If skills in the resume are organized by categories (e.g. "LANGUAGES: HTML, CSS, JavaScript\nFRONTEND FRAMEWORKS & LIBRARIES: React JS, Next JS\nSTYLING & UI: Tailwind CSS\nVERSION CONTROL: Git, VS Code\nFAMILIAR WITH: Node JS, Express JS"), preserve each category name followed by a colon and comma-separated skills, one category per line in the "skills" field.
+
 CRITICAL CHARACTER SPACING CLEANUP:
 - If the input contains names or text with spaces between individual letters (e.g. "R U C H I T A  S E N J A L I Y A" or "F R O N T E N D"), combine the spaced letters back into normal words (e.g. "Ruchita Senjaliya", "Frontend").
 
@@ -476,10 +484,10 @@ Required JSON structure:
 }
 
 Formatting Rules for nested or list content (IMPORTANT):
-- experience: Format each job exactly as "Title | Company | Location | Dates\n- Bullet 1\n- Bullet 2" (separated by blank lines). Ensure "Dates" are copy-pasted verbatim from the input.
+- experience: Format each job exactly as "Title | Company | Location | Dates\n- Bullet 1\n- Bullet 2" (separated by blank lines). Ensure ALL bullet points are preserved.
 - education: Format each degree as "Degree | School | Location | Dates". Ensure "Dates" are copy-pasted verbatim from the input.
-- projects: Format each project as "Project Name | Short Tech Stack or Dates\n- Bullet 1 (put project summary or description as bullet points below)\n- Bullet 2\n\n(blank line between projects — REQUIRED)". Do NOT put multi-sentence descriptions after the pipe (|) on line 1; put descriptions as bullet points starting with "- ".
-- skills: Comma-separated list.
+- projects: Format each project as "Project Name | Dates or Tech Stack\n- Bullet 1 (retain 'Technologies:' or summary bullet if present)\n- Bullet 2\n\n(blank line between projects — REQUIRED)".
+- skills: Preserve category headers if present (e.g. "LANGUAGES: HTML, CSS\nFRAMEWORKS: React, Next.js"). If no categories exist, format as a comma-separated list.
 - certifications: One per line "Name | Organization | Year". Ensure "Year" is copy-pasted verbatim from the input.
 - languages: Comma-separated list.
 - awards: "Award Name | Organization | Year". Ensure "Year" is copy-pasted verbatim from the input.
