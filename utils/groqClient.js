@@ -1,19 +1,22 @@
 import Groq from "groq-sdk";
-import { config } from "../src/config.js";
-
-const apiKey1 = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY;
-const apiKey2 = process.env.GROQ_API_KEY_1;
-const apiKey3 = process.env.GROQ_API_KEY_2;
-
-const groq1 = new Groq({ apiKey: apiKey1 });
-const groq2 = apiKey2 ? new Groq({ apiKey: apiKey2 }) : null;
-const groq3 = apiKey3 ? new Groq({ apiKey: apiKey3 }) : null;
 
 /**
  * Wrapper around groq.chat.completions.create that automatically
  * falls back to GROQ_API_KEY_1 and then GROQ_API_KEY_2 if a 429 Rate Limit error occurs.
  */
 export const createChatCompletion = async (options, requestOptions = {}) => {
+    const apiKey1 = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey2 = process.env.GROQ_API_KEY_1;
+    const apiKey3 = process.env.GROQ_API_KEY_2;
+
+    if (!apiKey1) {
+        throw new Error("GROQ_API_KEY environment variable is missing or empty.");
+    }
+
+    const groq1 = new Groq({ apiKey: apiKey1 });
+    const groq2 = apiKey2 ? new Groq({ apiKey: apiKey2 }) : null;
+    const groq3 = apiKey3 ? new Groq({ apiKey: apiKey3 }) : null;
+
     try {
         return await groq1.chat.completions.create(options, requestOptions);
     } catch (error) {
@@ -32,3 +35,4 @@ export const createChatCompletion = async (options, requestOptions = {}) => {
         throw error;
     }
 };
+

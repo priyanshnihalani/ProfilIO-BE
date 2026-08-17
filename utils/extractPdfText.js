@@ -1,6 +1,16 @@
 import pdfParse from "pdf-parse-fork";
 import { extractPdfTextWithOCR } from "./extractPdfTextWithOCR.js";
 
+export function fixSpacedOutText(str) {
+    if (!str || typeof str !== "string") return str;
+    return str.replace(/\b(?:[A-Za-z]\s+){2,}[A-Za-z]\b/g, (match) => {
+        return match
+            .split(/\s{2,}/)
+            .map(word => word.replace(/\s+/g, ''))
+            .join(' ');
+    });
+}
+
 function isLikelyImageBasedPdf(text, numPages) {
     const trimmed = text.trim();
 
@@ -30,7 +40,7 @@ function isLikelyImageBasedPdf(text, numPages) {
  */
 export async function extractPdfText(buffer) {
     const pdfData = await pdfParse(buffer);
-    const directText = (pdfData.text || "").trim();
+    const directText = fixSpacedOutText((pdfData.text || "").trim());
     const numPages = pdfData.numpages || 1;
 
     if (!isLikelyImageBasedPdf(directText, numPages)) {
@@ -44,7 +54,8 @@ export async function extractPdfText(buffer) {
         `[Extract] Image-based PDF detected (${directText.length} chars, ${numPages} page(s)). Running OCR…`
     );
 
-    const ocrText = (await extractPdfTextWithOCR(buffer)).trim();
+    const ocrRaw = (await extractPdfTextWithOCR(buffer)).trim();
+    const ocrText = fixSpacedOutText(ocrRaw);
 
     if (!ocrText) {
         if (directText) {
@@ -60,3 +71,4 @@ export async function extractPdfText(buffer) {
     console.log(`[Extract] OCR extracted ${ocrText.length} chars`);
     return { text: ocrText, method: "ocr" };
 }
+

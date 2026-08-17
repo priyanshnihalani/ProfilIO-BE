@@ -1,4 +1,5 @@
 import { createChatCompletion } from "./utils/groqClient.js";
+import { fixSpacedOutText } from "./utils/extractPdfText.js";
 
 const SECTION_PROMPTS = {
     summary: `
@@ -279,8 +280,49 @@ CRITICAL FORMATTING RULES — YOU MUST FOLLOW THESE:
     return stripMarkdown(raw);
 };
 
+const sanitizeJSONString = (str) => {
+    if (!str) return str;
+    let inString = false;
+    let escaped = false;
+    let out = "";
+    for (let i = 0; i < str.length; i++) {
+        const ch = str[i];
+        if (escaped) {
+            out += ch;
+            escaped = false;
+            continue;
+        }
+        if (ch === "\\") {
+            out += ch;
+            escaped = true;
+            continue;
+        }
+        if (ch === '"') {
+            inString = !inString;
+            out += ch;
+            continue;
+        }
+        if (inString) {
+            if (ch === '\n') {
+                out += '\\n';
+            } else if (ch === '\r') {
+                out += '\\r';
+            } else if (ch === '\t') {
+                out += '\\t';
+            } else if (ch.charCodeAt(0) < 32) {
+                // Ignore raw invalid control chars
+            } else {
+                out += ch;
+            }
+        } else {
+            out += ch;
+        }
+    }
+    return out;
+};
+
 const repairTruncatedJSON = (str) => {
-    let cleanStr = str.trim();
+    let cleanStr = sanitizeJSONString(str.trim());
     if (!cleanStr) return {};
 
     try {
@@ -375,7 +417,7 @@ const extractJSON = (text) => {
     const firstIdx = cleaned.indexOf('{');
     const lastIdx = cleaned.lastIndexOf('}');
     if (firstIdx !== -1 && lastIdx !== -1 && lastIdx >= firstIdx) {
-        cleaned = cleaned.substring(0, lastIdx + 1);
+        cleaned = cleaned.substring(firstIdx, lastIdx + 1);
     }
     
     cleaned = cleaned.trim();
@@ -387,6 +429,9 @@ export const parseResumeToJSON = async (rawText) => {
 You are an expert ATS resume parser.
 Extract the resume information from the raw text and map it STRICTLY to the following JSON format.
 If any field is missing from the resume, leave it as an empty string.
+
+CRITICAL CHARACTER SPACING CLEANUP:
+- If the input contains names or text with spaces between individual letters (e.g. "R U C H I T A  S E N J A L I Y A" or "F R O N T E N D"), combine the spaced letters back into normal words (e.g. "Ruchita Senjaliya", "Frontend").
 
 CRITICAL DATE PRESERVATION RULE:
 - Do NOT convert, format, normalize, or change any dates or date ranges.
@@ -431,9 +476,9 @@ Required JSON structure:
 }
 
 Formatting Rules for nested or list content (IMPORTANT):
-- experience: Format each job exactly as "Title | Company | Location | Dates\\n- Bullet 1\\n- Bullet 2" (separated by blank lines). Ensure "Dates" are copy-pasted verbatim from the input.
+- experience: Format each job exactly as "Title | Company | Location | Dates\n- Bullet 1\n- Bullet 2" (separated by blank lines). Ensure "Dates" are copy-pasted verbatim from the input.
 - education: Format each degree as "Degree | School | Location | Dates". Ensure "Dates" are copy-pasted verbatim from the input.
-- projects: Format each project as "Project Name | Project Details\\n- Bullet 1\\n- Bullet 2\\n\\n(blank line between projects — REQUIRED)".
+- projects: Format each project as "Project Name | Short Tech Stack or Dates\n- Bullet 1 (put project summary or description as bullet points below)\n- Bullet 2\n\n(blank line between projects — REQUIRED)". Do NOT put multi-sentence descriptions after the pipe (|) on line 1; put descriptions as bullet points starting with "- ".
 - skills: Comma-separated list.
 - certifications: One per line "Name | Organization | Year". Ensure "Year" is copy-pasted verbatim from the input.
 - languages: Comma-separated list.
@@ -461,6 +506,16 @@ Formatting Rules for nested or list content (IMPORTANT):
     if (!parsed || Object.keys(parsed).length === 0) {
         console.debug("[genAI] Raw LLM Response that failed parsing:\n", raw);
     }
+
+    // Clean up any residual spaced-out text from extracted fields
+    if (parsed && typeof parsed === "object") {
+        for (const key of Object.keys(parsed)) {
+            if (typeof parsed[key] === "string") {
+                parsed[key] = fixSpacedOutText(parsed[key]);
+            }
+        }
+    }
+
     return parsed;
 };
 
