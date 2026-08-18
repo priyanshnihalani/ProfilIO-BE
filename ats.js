@@ -354,7 +354,7 @@ const callGroq = async (systemPrompt, userPrompt) => {
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+      model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
       temperature: 0.1, 
       response_format: { type: "json_object" },
     }, { signal: controller.signal });

@@ -270,7 +270,7 @@ CRITICAL FORMATTING RULES — YOU MUST FOLLOW THESE:
                 content: `Target Role: ${targetRole || "Not specified"}\n\nCurrent Content:\n${content}`,
             }
         ],
-        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
         temperature: 0.3,
     });
 
@@ -517,7 +517,7 @@ Formatting Rules for nested or list content (IMPORTANT):
                 content: `Raw Resume Text:\n${rawText}`,
             }
         ],
-        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
         temperature: 0.1,
         max_tokens: 4000,
     });
@@ -604,7 +604,7 @@ ${JSON.stringify(candidateProfile, null, 2)}
             { role: "system", content: systemPrompt.trim() },
             { role: "user", content: userPrompt.trim() }
         ],
-        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
         temperature: 0.4,
     });
 
@@ -634,7 +634,7 @@ CRITICAL RULES:
             { role: "system", content: systemPrompt.trim() },
             { role: "user", content: `Instruction: ${instruction}\n\nCurrent Cover Letter:\n${currentContent}` }
         ],
-        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
         temperature: 0.3,
     });
 
