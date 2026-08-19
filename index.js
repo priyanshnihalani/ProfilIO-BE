@@ -129,8 +129,17 @@ app.post(
                 });
             }
 
-            const structuredData =
-                await parseResumeToJSON(rawText);
+            let structuredData = await parseResumeToJSON(rawText);
+
+            const hasAnyData = structuredData && typeof structuredData === "object" &&
+                Object.values(structuredData).some(v => typeof v === "string" && v.trim().length > 0);
+
+            if (!hasAnyData) {
+                return res.status(422).json({
+                    success: false,
+                    message: "Unable to extract content from resume. Please try uploading a different file or paste the text directly."
+                });
+            }
 
             return res.status(200).json({
                 success: true,

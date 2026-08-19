@@ -1,6 +1,6 @@
 import Groq from "groq-sdk";
 
-const FALLBACK_MODEL = "openai/gpt-oss-120b";
+const FALLBACK_MODEL = "llama-3.3-70b-versatile";
 
 const isModelNotFoundError = (error) => {
     return error?.status === 404 || 

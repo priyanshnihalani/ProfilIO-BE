@@ -270,7 +270,7 @@ CRITICAL FORMATTING RULES — YOU MUST FOLLOW THESE:
                 content: `Target Role: ${targetRole || "Not specified"}\n\nCurrent Content:\n${content}`,
             }
         ],
-        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
         temperature: 0.3,
     });
 
@@ -424,6 +424,76 @@ const extractJSON = (text) => {
     return repairTruncatedJSON(cleaned);
 };
 
+export const fallbackParseRawText = (rawText) => {
+    if (!rawText || typeof rawText !== "string") return {};
+
+    const lines = rawText.split("\n").map(l => l.trim()).filter(Boolean);
+    const emailMatch = rawText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    const phoneMatch = rawText.match(/(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+    const linkedinMatch = rawText.match(/https?:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+/i);
+    const githubMatch = rawText.match(/https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9_-]+/i);
+
+    let fullName = lines[0] || "Candidate";
+    let email = emailMatch ? emailMatch[0] : "";
+    let phone = phoneMatch ? phoneMatch[0] : "";
+    let linkedin = linkedinMatch ? linkedinMatch[0] : "";
+    let github = githubMatch ? githubMatch[0] : "";
+
+    const sectionBuffers = { summary: [], experience: [], education: [], skills: [], projects: [] };
+    let currentSection = "summary";
+
+    for (const line of lines) {
+        const lower = line.toLowerCase();
+        if (lower.includes("experience") || lower.includes("work history") || lower.includes("employment")) {
+            currentSection = "experience";
+            continue;
+        } else if (lower.includes("education") || lower.includes("academic")) {
+            currentSection = "education";
+            continue;
+        } else if (lower.includes("skill") || lower.includes("technologies") || lower.includes("tools")) {
+            currentSection = "skills";
+            continue;
+        } else if (lower.includes("project")) {
+            currentSection = "projects";
+            continue;
+        } else if (lower.includes("summary") || lower.includes("profile") || lower.includes("about")) {
+            currentSection = "summary";
+            continue;
+        }
+
+        if (sectionBuffers[currentSection]) {
+            sectionBuffers[currentSection].push(line);
+        }
+    }
+
+    return {
+        fullName,
+        email,
+        phone,
+        location: "",
+        website: "",
+        linkedin,
+        github,
+        websiteLabel: "",
+        websiteLink: "",
+        linkedinLabel: linkedin ? "LinkedIn" : "",
+        linkedinLink: linkedin,
+        githubLabel: github ? "GitHub" : "",
+        githubLink: github,
+        targetRole: "",
+        summary: sectionBuffers.summary.join(" ") || rawText.substring(0, 300),
+        experience: sectionBuffers.experience.join("\n") || rawText,
+        education: sectionBuffers.education.join("\n"),
+        skills: sectionBuffers.skills.join(", "),
+        projects: sectionBuffers.projects.join("\n"),
+        certifications: "",
+        languages: "",
+        awards: "",
+        volunteerWork: "",
+        publications: ""
+    };
+};
+
 export const parseResumeToJSON = async (rawText) => {
     const systemPrompt = `
 You are an expert ATS resume parser.
@@ -506,26 +576,37 @@ Formatting Rules for nested or list content (IMPORTANT):
 - awards: "Award Name | Organization | Year". Ensure "Year" is copy-pasted verbatim from the input.
 `;
 
-    const response = await createChatCompletion({
-        messages: [
-            {
-                role: "system",
-                content: systemPrompt.trim() + "\n\nCRITICAL: You MUST respond with a single, valid JSON object ONLY. Do NOT write any internal reasoning, chain of thought, or thinking processes. Do NOT use <think> tags or output any text before/after the JSON. Jump straight into the JSON object. Do not wrap it in markdown code blocks (e.g., do not use ```json).",
-            },
-            {
-                role: "user",
-                content: `Raw Resume Text:\n${rawText}`,
-            }
-        ],
-        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
-        temperature: 0.1,
-        max_tokens: 4000,
-    });
+    let raw = "{}";
+    try {
+        const response = await createChatCompletion({
+            messages: [
+                {
+                    role: "system",
+                    content: systemPrompt.trim() + "\n\nCRITICAL: You MUST respond with a single, valid JSON object ONLY. Do NOT write any internal reasoning, chain of thought, or thinking processes. Do NOT use <think> tags or output any text before/after the JSON. Jump straight into the JSON object. Do not wrap it in markdown code blocks (e.g., do not use ```json).",
+                },
+                {
+                    role: "user",
+                    content: `Raw Resume Text:\n${rawText}`,
+                }
+            ],
+            model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+            temperature: 0.1,
+            max_tokens: 4000,
+        });
 
-    const raw = response.choices[0]?.message?.content?.trim() || "{}";
-    const parsed = extractJSON(raw);
-    if (!parsed || Object.keys(parsed).length === 0) {
-        console.debug("[genAI] Raw LLM Response that failed parsing:\n", raw);
+        raw = response.choices[0]?.message?.content?.trim() || "{}";
+    } catch (llmErr) {
+        console.error("[genAI] LLM chat completion failed:", llmErr?.message || llmErr);
+    }
+
+    let parsed = extractJSON(raw);
+
+    const isPopulated = parsed && typeof parsed === "object" && 
+        Object.values(parsed).some(val => typeof val === "string" && val.trim().length > 0);
+
+    if (!isPopulated) {
+        console.warn("[genAI] LLM returned empty JSON structure. Applying fallback text parsing.");
+        parsed = fallbackParseRawText(rawText);
     }
 
     // Clean up any residual spaced-out text from extracted fields
@@ -604,7 +685,7 @@ ${JSON.stringify(candidateProfile, null, 2)}
             { role: "system", content: systemPrompt.trim() },
             { role: "user", content: userPrompt.trim() }
         ],
-        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
         temperature: 0.4,
     });
 
@@ -634,7 +715,7 @@ CRITICAL RULES:
             { role: "system", content: systemPrompt.trim() },
             { role: "user", content: `Instruction: ${instruction}\n\nCurrent Cover Letter:\n${currentContent}` }
         ],
-        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
         temperature: 0.3,
     });
 
@@ -709,7 +790,7 @@ If no specific text improvement is proposed (e.g. greeting, questions, general t
 
     const response = await createChatCompletion({
         messages: formattedMessages,
-        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
         temperature: 0.3,
         response_format: { type: "json_object" }
     });
