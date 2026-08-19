@@ -7,6 +7,7 @@ import mammoth from "mammoth";
 import {
     improveResumeSection,
     parseResumeToJSON,
+    chatResumeAssistant,
 } from "./genAI.js";
 
 import { extractPdfText } from "./utils/extractPdfText.js";
@@ -66,52 +67,55 @@ app.post(
     upload.single("resume"),
     async (req, res) => {
         try {
-            if (!req.file) {
-                return res.status(400).json({
-                    success: false,
-                    message: "No file uploaded",
-                });
-            }
-
-            const {
-                mimetype,
-                buffer,
-                originalname,
-            } = req.file;
-
             let rawText = "";
             let extractionMethod = "direct";
 
-            // PDF — text-based extraction first, OCR fallback for scanned/image PDFs
-            if (mimetype === "application/pdf") {
-                try {
-                    const result = await extractPdfText(buffer);
-                    rawText = result.text;
-                    extractionMethod = result.method;
-                } catch (extractError) {
-                    console.error("[Parse] PDF extraction failed:", extractError);
-                }
-            }
-
-            // DOCX
-            else if (
-                mimetype ===
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-                originalname.toLowerCase().endsWith(".docx")
-            ) {
-                const result = await mammoth.extractRawText({
+            if (req.file) {
+                const {
+                    mimetype,
                     buffer,
-                });
+                    originalname,
+                } = req.file;
 
-                rawText = result.value;
-            }
+                // PDF — text-based extraction first, OCR fallback for scanned/image PDFs
+                if (mimetype === "application/pdf") {
+                    try {
+                        const result = await extractPdfText(buffer);
+                        rawText = result.text;
+                        extractionMethod = result.method;
+                    } catch (extractError) {
+                        console.error("[Parse] PDF extraction failed:", extractError);
+                    }
+                }
 
-            // Unsupported
-            else {
+                // DOCX
+                else if (
+                    mimetype ===
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+                    originalname.toLowerCase().endsWith(".docx")
+                ) {
+                    const result = await mammoth.extractRawText({
+                        buffer,
+                    });
+
+                    rawText = result.value;
+                }
+
+                // Unsupported
+                else {
+                    return res.status(400).json({
+                        success: false,
+                        message:
+                            "Unsupported file type. Please upload PDF or DOCX.",
+                    });
+                }
+            } else if (req.body.text) {
+                rawText = req.body.text;
+                extractionMethod = "paste";
+            } else {
                 return res.status(400).json({
                     success: false,
-                    message:
-                        "Unsupported file type. Please upload PDF or DOCX.",
+                    message: "No file uploaded or text pasted",
                 });
             }
 
@@ -245,6 +249,51 @@ app.post(
                 success: false,
                 message:
                     "Failed to improve resume section.",
+            });
+        }
+    }
+);
+
+/**
+ * Conversational Resume Assistant Chat
+ */
+app.post(
+    "/api/resume/chat",
+    requireAuth,
+    async (req, res) => {
+        try {
+            const { messages, resumeData, targetRole, jobDescription, action } = req.body;
+            
+            let atsContext = null;
+            if (resumeData) {
+                const resumeText = buildResumeText(resumeData);
+                const scoreResult = calculateAtsScore(
+                    resumeText,
+                    jobDescription || "",
+                    targetRole || resumeData.targetRole || "",
+                    {}
+                );
+                atsContext = buildAtsContext(scoreResult, null);
+            }
+            
+            const chatResult = await chatResumeAssistant({
+                messages,
+                resumeData,
+                targetRole,
+                jobDescription,
+                action,
+                atsContext
+            });
+            
+            return res.status(200).json({
+                success: true,
+                ...chatResult
+            });
+        } catch (error) {
+            console.error("Resume chat error:", error);
+            return res.status(500).json({
+                success: false,
+                message: error.message || "Failed to process chat request."
             });
         }
     }

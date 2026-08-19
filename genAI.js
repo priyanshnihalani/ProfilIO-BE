@@ -641,3 +641,90 @@ CRITICAL RULES:
     const raw = response.choices[0]?.message?.content?.trim() || "";
     return stripMarkdown(raw);
 };
+
+export const chatResumeAssistant = async ({
+    messages,
+    resumeData,
+    targetRole,
+    jobDescription,
+    action,
+    atsContext = null
+}) => {
+    const chatHistory = messages || [];
+    
+    const systemPrompt = `You are "Profillo AI", an expert MAANG-level ATS resume writer and career consultant.
+Your goal is to guide the user in optimizing their resume.
+
+Current Resume JSON Data:
+${JSON.stringify(resumeData, null, 2)}
+
+Target Role: ${targetRole || "Not specified"}
+Job Description: ${jobDescription || "Not provided"}
+${atsContext ? `Current ATS Score: ${atsContext.overallScore}/100\nMissing Keywords: ${atsContext.missingKeywords?.join(", ") || "None"}\nWeak Phrases: ${atsContext.weakPhrases?.join(", ") || "None"}\nCritical Issues:\n${atsContext.criticalIssues?.map(i => ` - ${i}`).join("\n") || "None"}` : ""}
+
+GUIDELINES:
+1. Provide structured, actionable advice. Avoid generic, empty sentences.
+2. If the user asks to improve their resume (or if the action is 'improve_ats', 'improve_experience', 'improve_summary', or 'optimize_jd'), suggest concrete improvements.
+3. When suggesting an improvement to a section, wrap the suggestion in the "suggestion" JSON field.
+4. Keep the suggestion's "before" exactly matching the original section string, and the "after" containing the complete improved section string.
+5. In the "after" text, you may use inline tags: <strong>, <em>, <u> for emphasis, but DO NOT use any markdown (no asterisks, backticks, or headers).
+6. Under no circumstances should you claim skills, experiences, certifications, or metrics not supported by the candidate's original content. Avoid fabricating information.
+7. If the user is starting from scratch (i.e. all resumeData fields are empty), ask them simple, progressive questions one at a time to collect their target role, summary, and experience details.
+
+You MUST respond with a single, valid JSON object ONLY matching this schema:
+{
+  "message": "Conversational assistant response text, formatted in standard markdown (bullet points, bold, etc.) detailing your review, questions, or updates.",
+  "suggestion": {
+    "section": "summary" | "experience" | "projects" | "skills" | "education" | "certifications" | "awards" | "volunteerWork" | "publications",
+    "before": "The exact original text of the section that is being improved (from the resumeData JSON above).",
+    "after": "The complete new text for the section, using HTML tags <strong>, <em>, <u> if needed, but NO markdown formatting."
+  }
+}
+
+If no specific text improvement is proposed (e.g. greeting, questions, general tips), set "suggestion": null.`;
+
+    const formattedMessages = [
+        { role: "system", content: systemPrompt },
+        ...chatHistory.map(m => ({ role: m.role, content: m.content }))
+    ];
+
+    if (action && action !== 'chat') {
+        let actionPrompt = "";
+        if (action === 'init') {
+            actionPrompt = "I just loaded my resume. Please review it, run an ATS check, and tell me what the top issues are. Also present the structured action buttons.";
+        } else if (action === 'improve_ats') {
+            actionPrompt = "Please rewrite the weak parts of my resume to maximize my ATS score, focusing on missing keywords and structure.";
+        } else if (action === 'improve_experience') {
+            actionPrompt = "Please optimize my experience bullets. Use active verbs, format as Title | Company | Location | Dates, and highlight measurable achievements.";
+        } else if (action === 'improve_summary') {
+            actionPrompt = "Please rewrite my professional summary to be more impactful and include keywords relevant to my target role.";
+        } else if (action === 'optimize_jd') {
+            actionPrompt = `Please optimize my resume specifically for the target Job Description:\n${jobDescription}`;
+        }
+        
+        if (actionPrompt) {
+            formattedMessages.push({ role: "user", content: actionPrompt });
+        }
+    }
+
+    const response = await createChatCompletion({
+        messages: formattedMessages,
+        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+        temperature: 0.3,
+        response_format: { type: "json_object" }
+    });
+
+    const raw = response.choices[0]?.message?.content?.trim() || "{}";
+    
+    try {
+        return JSON.parse(raw);
+    } catch (e) {
+        console.error("[genAI] Chat Response parsing failed:", raw);
+        const parsed = extractJSON(raw);
+        if (parsed && parsed.message) return parsed;
+        return {
+            message: "I reviewed your resume but encountered an issue formatting my suggestions. How can I help you next?",
+            suggestion: null
+        };
+    }
+};
