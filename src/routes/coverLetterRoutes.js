@@ -8,28 +8,30 @@ import { PLAN_LIMITS } from '../config/plans.js';
 const router = express.Router();
 
 // Ensure the user is on the PRO plan
+// Ensure user is authorized
 const requirePremium = async (req, res, next) => {
     try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
         if (req.user.role?.toUpperCase() === 'ADMIN' || req.user.id === 'master-admin') {
             return next();
         }
 
         const user = await prisma.user.findUnique({ where: { id: req.user.id } });
-        if (!user || user.planType !== 'PRO') {
-            return res.status(403).json({ 
-                success: false, 
-                message: "Cover Letter Generator is a Pro-only feature. Please upgrade your plan." 
-            });
+        if (!user) {
+            return res.status(401).json({ success: false, message: "User not found." });
         }
         next();
     } catch (e) {
-        res.status(500).json({ success: false, message: "Server error checking plan." });
+        console.error("User authorization error:", e);
+        res.status(500).json({ success: false, message: "Server error checking authorization." });
     }
 };
 
 /**
  * GET /api/cover-letter
- * List all cover letters for the authenticated PRO user
+ * List all cover letters for the authenticated user
  */
 router.get('/', requireAuth, requirePremium, async (req, res) => {
     try {
@@ -39,6 +41,7 @@ router.get('/', requireAuth, requirePremium, async (req, res) => {
         });
         res.json({ success: true, coverLetters: letters });
     } catch (error) {
+        console.error("Fetch cover letters error:", error);
         res.status(500).json({ success: false, message: "Failed to fetch cover letters." });
     }
 });
@@ -55,6 +58,7 @@ router.get('/:id', requireAuth, requirePremium, async (req, res) => {
         if (!letter) return res.status(404).json({ success: false, message: "Not found." });
         res.json({ success: true, coverLetter: letter });
     } catch (error) {
+        console.error("Fetch cover letter error:", error);
         res.status(500).json({ success: false, message: "Failed to fetch cover letter." });
     }
 });
@@ -71,27 +75,61 @@ router.post('/', requireAuth, requirePremium, async (req, res) => {
             jobPostingUrl, tone, content, templateId, fullName 
         } = req.body;
         
+        const cleanResumeProfileId = (resumeProfileId && typeof resumeProfileId === 'string' && resumeProfileId.trim() !== '') ? resumeProfileId : null;
+        const cleanId = (id && typeof id === 'string' && id.trim() !== '' && id !== 'new') ? id : null;
+
+        const dataToSave = {
+            resumeProfileId: cleanResumeProfileId,
+            resumeData: resumeData || undefined,
+            jobTitle: jobTitle || 'Role',
+            companyName: companyName || 'Company',
+            jobDescription: jobDescription || '',
+            hiringManagerName: hiringManagerName || null,
+            companyLocation: companyLocation || null,
+            jobPostingUrl: jobPostingUrl || null,
+            tone: tone || 'Professional',
+            content: content || '',
+            templateId: templateId || 'classic',
+            fullName: fullName || null,
+        };
+
         let letter;
-        if (id) {
-            letter = await prisma.coverLetter.findFirst({ where: { id, userId: req.user.id } });
-            if (!letter) return res.status(404).json({ success: false, message: "Not found." });
-            
-            letter = await prisma.coverLetter.update({
-                where: { id },
-                data: { resumeProfileId, resumeData, jobTitle, companyName, jobDescription, hiringManagerName, companyLocation, jobPostingUrl, tone, content, templateId, fullName }
-            });
+        if (cleanId) {
+            const existingLetter = await prisma.coverLetter.findFirst({ where: { id: cleanId, userId: req.user.id } });
+            if (existingLetter) {
+                letter = await prisma.coverLetter.update({
+                    where: { id: cleanId },
+                    data: dataToSave
+                });
+            } else {
+                letter = await prisma.coverLetter.create({
+                    data: {
+                        ...dataToSave,
+                        userId: req.user.id,
+                    }
+                });
+            }
         } else {
             letter = await prisma.coverLetter.create({
                 data: {
+                    ...dataToSave,
                     userId: req.user.id,
-                    resumeProfileId, resumeData, jobTitle, companyName, jobDescription, hiringManagerName, companyLocation, jobPostingUrl, tone, content, templateId, fullName
                 }
             });
         }
         res.json({ success: true, coverLetter: letter });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: "Failed to save cover letter." });
+        console.error("Save Cover Letter Error Full:", JSON.stringify(error, null, 2));
+        console.error("Save Cover Letter Error Message:", error.message);
+        console.error("Save Cover Letter Error Code:", error.code);
+        console.error("Save Cover Letter Error Meta:", error.meta);
+        res.status(500).json({ 
+            success: false, 
+            message: "Failed to save cover letter.",
+            detail: error.message,
+            code: error.code,
+            meta: error.meta
+        });
     }
 });
 
