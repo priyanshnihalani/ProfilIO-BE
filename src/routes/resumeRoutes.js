@@ -7,10 +7,6 @@ const router = express.Router();
 
 router.get('/', requireAuth, async (req, res) => {
     try {
-        if (req.user.id === 'master-admin') {
-            return res.json({ success: true, profiles: [] });
-        }
-
         const profiles = await prisma.resumeProfile.findMany({
             where: { userId: req.user.id },
             orderBy: { updatedAt: 'desc' }
@@ -25,10 +21,6 @@ router.get('/', requireAuth, async (req, res) => {
 
 router.post('/', requireAuth, async (req, res) => {
     try {
-        if (req.user.id === 'master-admin') {
-            return res.status(400).json({ success: false, message: 'Admin cannot create profiles.' });
-        }
-
         const { name, data } = req.body;
         if (!data) return res.status(400).json({ success: false, message: 'Resume data is required.' });
 
@@ -40,8 +32,9 @@ router.post('/', requireAuth, async (req, res) => {
         if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
 
         const limit = PLAN_LIMITS[user.planType]?.resumeProfileLimit ?? 1;
+        const isAdmin = req.user.role === 'ADMIN' || req.user.id === 'master-admin';
 
-        if (user._count.resumeProfiles >= limit) {
+        if (!isAdmin && user._count.resumeProfiles >= limit) {
             return res.status(403).json({
                 success: false,
                 code: 'RESUME_PROFILE_LIMIT_REACHED',
@@ -56,11 +49,27 @@ router.post('/', requireAuth, async (req, res) => {
                 data: data
             }
         });
-
         res.json({ success: true, profile: newProfile });
     } catch (error) {
         console.error('Create profile error:', error);
         res.status(500).json({ success: false, message: error.message || 'Failed to create resume profile.' });
+    }
+});
+
+router.get('/:id', requireAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const profile = await prisma.resumeProfile.findFirst({
+            where: { id, userId: req.user.id }
+        });
+
+        if (!profile) return res.status(404).json({ success: false, message: 'Profile not found.' });
+
+        res.json({ success: true, profile });
+    } catch (error) {
+        console.error('Fetch profile by id error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch resume profile.' });
     }
 });
 

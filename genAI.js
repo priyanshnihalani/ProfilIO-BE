@@ -597,6 +597,7 @@ Formatting Rules for nested or list content (IMPORTANT):
         raw = response.choices[0]?.message?.content?.trim() || "{}";
     } catch (llmErr) {
         console.error("[genAI] LLM chat completion failed:", llmErr?.message || llmErr);
+        throw new Error(`LLM completion failed: ${llmErr?.message || 'Rate limit or connection timeout. Please try again.'}`);
     }
 
     let parsed = extractJSON(raw);
