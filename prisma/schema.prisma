@@ -65,3 +65,19 @@ model CoverLetter {
 
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model VerificationToken {
+  id        String   @id @default(uuid())
+  email     String
+  token     String
+  type      TokenType
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+enum TokenType {
+  REGISTER
+  RESET_PASSWORD
+}
