@@ -176,8 +176,9 @@ app.post("/api/resume/generate-pdf", consumeUsage("resumeDownloads"), async (req
             });
         }
 
-        const pdfBuffer = await generatePdfFromHtml(html, css || "");
         const safeName = (filename || "resume.pdf").replace(/[^\w.\-]/g, "_");
+        const title = safeName.replace(/\.pdf$/i, '').replace(/_/g, ' ');
+        const pdfBuffer = await generatePdfFromHtml(html, css || "", false, title);
 
         await req.consumeQuota();
 

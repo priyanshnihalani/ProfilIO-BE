@@ -3,11 +3,12 @@ import puppeteer from "puppeteer";
 const GOOGLE_FONTS =
     "https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&display=swap";
 
-function buildHtmlDocument(html, css, isCoverLetter = false) {
+function buildHtmlDocument(html, css, isCoverLetter = false, title = "Resume") {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+<title>${title}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -70,7 +71,7 @@ function buildHtmlDocument(html, css, isCoverLetter = false) {
 </html>`;
 }
 
-export async function generatePdfFromHtml(html, css = "", isCoverLetter = false) {
+export async function generatePdfFromHtml(html, css = "", isCoverLetter = false, title = "Resume") {
     let executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
     
     // If we're on Windows, ignore the Linux chromium path from .env and use Chrome/bundled browser
@@ -99,7 +100,7 @@ export async function generatePdfFromHtml(html, css = "", isCoverLetter = false)
 
     try {
         const page = await browser.newPage();
-        await page.setContent(buildHtmlDocument(html, css, isCoverLetter), {
+        await page.setContent(buildHtmlDocument(html, css, isCoverLetter, title), {
             waitUntil: "networkidle0",
         });
 
